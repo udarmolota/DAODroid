@@ -1,0 +1,38 @@
+# Generated game code (XenonRecomp output) and anything derived from the disc: never in git.
+ppc/
+ppc_tu6/
+recomp/ppc/
+recomp/ppc_tu6/
+recomp/tools/
+recomp/build/
+recomp/build-*/
+recomp/userdata/
+*.iso
+*.xex
+*.xexp
+*.7z
+game/
+gamedata/
+
+# Build output
+build/
+.cxx/
+android/**/build/
+android/.gradle/
+android/local.properties
+*.apk
+*.aab
+*.so
+*.a
+*.o
+*.obj
+
+# Tooling and editor noise
+.vs/
+.idea/
+__pycache__/
+*.log
+
+# Phase 1 working folders: the extracted disc image and the PC install of DAORecomp.
+image/
+install/

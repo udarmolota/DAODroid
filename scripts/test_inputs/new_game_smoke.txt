@@ -1,0 +1,7 @@
+# Smoke run without any save: title screen -> New Game -> through character creation on the
+# defaults. For scripts/test/run_game.sh (DAORecomp's harness). Captures every 2 s show the
+# title art, the main menu, the creator screens and whatever loads after them.
+# (No semicolons in comments: the parser treats ';' as a statement separator even here.)
+every 2 START 0.2 from 10 until 26   # past "Press START" and any notices
+27 A 0.2                             # first menu item (New Game when there is no save)
+every 3 A 0.2 from 32 until 80       # accept each creator screen's default

@@ -1,0 +1,6 @@
+# Reproduces a manual run: intro logos NOT skipped (run with patches.skip_intro_logos=false),
+# so the title screen comes at ~73 s instead of ~8 s. Then START, New Game, and A on the quote
+# screen, which is what starts the first load (oth999d.bin) in the scripted runs.
+every 2 START 0.2 from 76 until 92   # past "Press START" and the storage-device notice
+every 3 A 0.2 from 106 until 112     # New Game (the DLC check may still be up at 106)
+every 3 A 0.2 from 115 until 175     # the quote screen needs A, then the creator's defaults

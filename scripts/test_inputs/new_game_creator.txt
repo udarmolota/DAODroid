@@ -1,0 +1,8 @@
+# New Game and past the intro movie into character creation, without any save. For
+# scripts/test/run_game.sh. Times from the new_game_smoke run: notice at 10 s, main menu at
+# 26 s, New Game starts the intro movie at ~30 s (A does not skip it: START or B is tried).
+every 2 START 0.2 from 10 until 26   # past "Press START" and the storage-device notice
+27 A 0.2                             # New Game
+every 6 START 0.2 from 34 until 58   # try skipping the intro movie
+every 6 B 0.2 from 37 until 58
+every 3 A 0.2 from 60 until 200      # accept the creator screens' defaults

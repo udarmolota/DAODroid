@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A plain placeholder mark: a sword-like blade on the Grey Warden red. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#8C0000"
+        android:pathData="M54,22 L60,34 L60,70 L54,86 L48,70 L48,34 Z" />
+    <path
+        android:fillColor="#C9B38C"
+        android:pathData="M38,68 L70,68 L70,74 L38,74 Z M51,74 L57,74 L57,90 L51,90 Z" />
+</vector>

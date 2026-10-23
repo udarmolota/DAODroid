@@ -36,3 +36,6 @@ __pycache__/
 # Phase 1 working folders: the extracted disc image and the PC install of DAORecomp.
 image/
 install/
+
+# Game data kept next to the repo (localization archives etc.): never committed.
+*.rar

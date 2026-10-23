@@ -4,6 +4,9 @@
 
 #include <android/native_window.h>
 
+#include <chrono>
+#include <unordered_map>
+
 #include "input/input.h"
 #include "kernel/game_exit.h"
 #include "xenia/ui/surface_android.h"
@@ -24,6 +27,13 @@ namespace dao::app
     SdlWindowedAppContext::SdlWindowedAppContext()
     {
         userEvent_ = SDL_RegisterEvents(1);
+        wake_ = SDL_CreateSemaphore(0);
+    }
+
+    void SdlWindowedAppContext::Wake()
+    {
+        if (wake_)
+            SDL_SignalSemaphore(wake_);
     }
 
     void SdlWindowedAppContext::NotifyUILoopOfPendingFunctions()
@@ -32,6 +42,7 @@ namespace dao::app
         event.type = userEvent_;
         event.user.code = kExecutePendingFunctions;
         SDL_PushEvent(&event);
+        Wake();
     }
 
     void SdlWindowedAppContext::PlatformQuitFromUIThread()
@@ -39,6 +50,7 @@ namespace dao::app
         SDL_Event event{};
         event.type = SDL_EVENT_QUIT;
         SDL_PushEvent(&event);
+        Wake();
     }
 
     void SdlWindowedAppContext::RequestPaint()
@@ -50,28 +62,60 @@ namespace dao::app
         event.type = userEvent_;
         event.user.code = kPaint;
         SDL_PushEvent(&event);
+        Wake();
     }
 
     void SdlWindowedAppContext::RunUILoop(SDL_Window* window, SdlWindow* xeWindow)
     {
         bool surfaceLost = false;
+        // DAO_PROFILE: how often the loop wakes and with what (the SDL thread was seen
+        // burning a core); counts logged every 20 s.
+        const bool countEvents = getenv("DAO_PROFILE") != nullptr;
+        std::unordered_map<uint32_t, uint32_t> eventCounts;
+        uint32_t paintCount = 0, pendingCount = 0;
+        auto lastReport = std::chrono::steady_clock::now();
+        uint32_t wakeups = 0;
         for (;;)
         {
             SDL_Event event;
-            if (!SDL_WaitEvent(&event))
+            if (countEvents)
             {
-                LOGE("SDL_WaitEvent failed: {}", SDL_GetError());
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                const auto now = std::chrono::steady_clock::now();
+                if (now - lastReport >= std::chrono::seconds(20))
+                {
+                    std::string line;
+                    for (const auto& [type, count] : eventCounts)
+                        line += fmt::format(" {:#x}:{}", type, count);
+                    LOGI("UI loop: {} wakeups, {} paints, {} pending-function wakes, events by type:{}", wakeups, paintCount,
+                        pendingCount, line);
+                    eventCounts.clear();
+                    paintCount = pendingCount = 0;
+                    wakeups = 0;
+                    lastReport = now;
+                }
+            }
+            // Everything queued (SDL pumps its Android lifecycle and input here), then a
+            // nap: our own requests wake it at once, anything else waits for the next poll.
+            if (!SDL_PollEvent(&event))
+            {
+                SDL_WaitSemaphoreTimeout(wake_, 16);
+                wakeups++;
                 continue;
             }
+            if (countEvents)
+                eventCounts[event.type]++;
             if (event.type == userEvent_)
             {
                 if (event.user.code == kExecutePendingFunctions)
                 {
+                    if (countEvents)
+                        pendingCount++;
                     ExecutePendingFunctionsFromUIThread();
                 }
                 else if (event.user.code == kPaint)
                 {
+                    if (countEvents)
+                        paintCount++;
                     paintRequested_.store(false, std::memory_order_release);
                     if (xeWindow && !surfaceLost)
                         xeWindow->Paint(false);

@@ -15,10 +15,22 @@
 #include "third_party/fmt/include/fmt/format.h"
 #include "third_party/glslang/SPIRV/GLSL.std.450.h"
 #include "xenia/base/assert.h"
+#include "xenia/base/cvar.h"
 #include "xenia/base/math.h"
 #include "xenia/gpu/gpu_flags.h"
 #include "xenia/gpu/render_target_cache.h"
 #include "xenia/gpu/spirv_compatibility.h"
+
+// DAO: a global texture LOD bias for mip-mapped sampling with a computed LOD,
+// baked into the translated shaders (it takes effect at the next start: the
+// shaders are translated again from the guest ucode). +1 samples every such
+// texture one mip smaller (half the width and height): less texture bandwidth
+// on a phone's GPU, a softer picture. Explicit-LOD fetches (render target
+// reads, the game's own LOD selection) are left alone.
+DEFINE_int32(dao_texture_lod_bias, 0,
+             "DAO: added to the LOD of mip-mapped texture fetches with a "
+             "computed LOD (1 = one mip smaller, half resolution).",
+             "GPU");
 
 namespace xe {
 namespace gpu {
@@ -1847,6 +1859,13 @@ void SpirvShaderTranslator::ProcessTextureFetchInstruction(
           lod = builder_->createNoContractionBinOp(
               spv::OpFAdd, type_float_, lod,
               builder_->makeFloatConstant(instr.attributes.lod_bias));
+        }
+        // DAO: the global LOD bias (see dao_texture_lod_bias above).
+        if (use_computed_lod && cvars::dao_texture_lod_bias) {
+          lod = builder_->createNoContractionBinOp(
+              spv::OpFAdd, type_float_, lod,
+              builder_->makeFloatConstant(
+                  float(cvars::dao_texture_lod_bias)));
         }
 
         // Cube auto-LOD without register gradients uses implicit LOD + bias to

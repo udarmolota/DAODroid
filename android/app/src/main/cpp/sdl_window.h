@@ -23,7 +23,9 @@ namespace dao::app
         SdlWindowedAppContext();
 
         // The SDL event loop: UI-thread functions, paint requests, the window's surface
-        // and size, gamepads, quit. Returns when the app quits.
+        // and size, gamepads, quit. Returns when the app quits. It polls SDL's queue and
+        // sleeps on its own semaphore (SDL_WaitEvent's Android path was seen spinning a
+        // whole core with no events at all).
         void RunUILoop(SDL_Window* window, SdlWindow* xeWindow);
 
         void NotifyUILoopOfPendingFunctions() override;
@@ -33,7 +35,12 @@ namespace dao::app
         void RequestPaint();
 
     private:
+        // Wakes the loop for our own requests; SDL's events (touch, lifecycle) are seen
+        // at the next poll, within a frame.
+        void Wake();
+
         Uint32 userEvent_ = 0;
+        SDL_Semaphore* wake_ = nullptr;
         std::atomic<bool> paintRequested_{ false };
     };
 

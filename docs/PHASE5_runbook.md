@@ -81,6 +81,13 @@ the NDK toolchain (as in PHASE4_runbook.md) and `ninja -C build/app daodroid`.
 capture log line carries the draw counts of a recent frame. Pull files binary-safely with
 `adb exec-out run-as com.daodroid cat <file> > local` (a plain `adb shell cat` mangles them).
 
+Driver and env.txt as of 2026-10-23: Turnip Gen8 V38 (StevenMXZ, Mesa 27.0) in
+`files/dao/driver/`, and `env.txt` with `TU_DEBUG=sysmem` — on the Adreno 830 Turnip's tiled
+(GMEM) rendering page-faults (kgsl `gpufaults` climbs, then VK_ERROR_DEVICE_LOST), visibly with
+the engine's dynamic shadows off; sysmem rendering avoids it at no measurable fps cost. Other
+builds tried: V36 (stable, slower), V32 (stable, not faster), V25.1 (no gain), V22 (black
+picture), v26_b10 (fast but faults even with shadows), Zomdroid 8xx 26.1 (swapchain breaks).
+
 Performance bar (2026-10-23, temporary): `PerfOverlayView` + `PerfSampler` from Zomdroid, drawn
 at the top centre over the pad (not clickable). fps = presented frames (Xenia swaps, JNI
 `nativeGetPresentedFrames`), CPU = the process's ticks over all cores, GPU = the kgsl `gpubusy`

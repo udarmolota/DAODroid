@@ -75,3 +75,11 @@ by `scripts/build_xenia_shaders_spirv.py` with the NDK's shader tools (glslc,
 spirv-opt, spirv-dis) into the build tree, not committed. The output shaders include
 AMD FidelityFX CAS and FSR 1 headers from the xenia-canary checkout's submodules.
 DAORecomp's own `dao_*` shaders are HLSL for Direct3D 12 and are skipped.
+
+## Texture LOD bias switch (2026-10-23)
+
+`gpu/spirv_shader_translator_fetch.cc`: `dao_texture_lod_bias` (int cvar, default 0, set in
+config.toml's `[xenia]`) is added to the LOD of every mip-mapped fetch with a computed LOD,
+after the fetch constant's and the instruction's biases. 1 = one mip smaller everywhere (the
+effect of halving the textures, with no data changed). Explicit-LOD fetches are untouched.
+Baked into the translated SPIR-V, so it applies from the next start.

@@ -72,13 +72,67 @@ entry first. Plan: `PLAN_dao_android_native_port.md`; phase 1 steps: `PHASE1_run
   wastes a core that heats the phone. Profiler now walks frame pointers (inclusive view) to
   see who wakes the SDL loop; the POSIX CPU-clock timers tick every ~4 ms, not 1 ms.
   Her report: the round party portraits (HUD, left) don't show the hero and the dog —
-  render-to-texture portraits; to compare with a PC frame trace later.
+  render-to-texture portraits; to compare with a PC frame trace later. (Later: she saw them
+  appear once and vanish again — the render works, the result gets lost: suspect Xenia's
+  texture cache reloading the portrait's memory; note the UI action that redraws them.)
+  Confirmed: the portraits appear right after a conversation (the dialogue renders them), then
+  vanish later; the event that loses them is still to be caught.
   Settings bisected one at a time (her runs): **post-processing off is safe and helps**
   (~21 → ~25 fps while the GPU clock fell 443 → 389 MHz); **dynamic shadows off crashes**
   (3 of 3: fps drops, then VK_ERROR_DEVICE_LOST 10–15 s later, kgsl gpufaults +12). The
   engine's shadows-off path makes Turnip fault — to investigate with a frame trace (PC trace
   of the same state for comparison); until then shadows stay on. config.toml on the phone:
   shadows = true, post_processing = false. Upscaler "bilinear" vs FSR still to test.
+  Evening run after cooling, post-processing off, shadows on: the hall at 30–44 fps away
+  from the fire (GPU allowed 734 MHz, thermal_pwrlevel 6), drops near the torches/fireplace
+  (lights). Stack profile of the SDL thread: it's all inside RunUILoop → SDL_WaitEvent's
+  Android path (PeepEvents, queue mutex, lifecycle semaphore, a spinning CAS), no JNI,
+  no painting — the loop wakes far too often; an event counter (by type, paints, pending
+  functions) added to RunUILoop under DAO_PROFILE to see the source. Enabling the phone's
+  gpu_debug_layers before the layer is in the APK crashes the app at the splash screen
+  (HWUI's own Vulkan init asserts) — enable it only together with the APK that carries it.
+  Validation layer: Android's implicit injection only reaches HWUI, not our private loader
+  copy; `vulkan_validation = true` in config.toml's [xenia] makes Xenia enable it explicitly
+  (works: "Enabled layers: VK_LAYER_KHRONOS_validation"). With shadows off: **no API errors**
+  at all while kgsl gpufaults keep climbing (+1 every ~30 s) → the fault is in GPU execution
+  (shader memory access?) or Turnip itself; next: GPU-assisted validation (debug.vulkan.
+  khronos_validation.gpuav_enable). Perf finding from the layer: the swapchain is created with
+  preTransform IDENTITY while the surface's currentTransform is ROTATE_90 → the compositor
+  rotates every frame (an extra full-screen pass); pre-rotating in the presenter would save it.
+  `skip_intro_logos = true` ([patches]) skips the three logo movies.
+  GPU-assisted validation (gpuav) on Turnip: the GPU hangs ~5 s into loading the save, before
+  any finding — not usable here. Phone left playable: shadows on, post-processing off,
+  vulkan_validation off, debug-layer setting and gpuav properties cleared. Remaining ways
+  into the shadows-off fault: a frame trace of the first faulting frames vs the PC, Turnip's
+  TU_DEBUG switches via env.txt (sysmem/nolrz/noubwc/flushall) to localize the block, or a
+  Turnip issue with a capture.
+  Driver sweep for the shadows-off fault (kgsl gpufaults): Turnip Gen8 V36 — clean with
+  shadows on for long sessions, faults only with shadows off; v26_b10 (Mesa 26.0 dev) — ~50 fps
+  cold but faults even WITH shadows on (+16 in minutes = constant stutter, then device lost);
+  V32 — faults without shadows like V36 (+14, crash). So the shadows-off path faults on every
+  Turnip build: not a driver version issue. Decision (hers): stop chasing it; shadows stay on,
+  V36 stays the driver. Phone restored: V36, shadows on, post-processing off. Still to test:
+  a8xx-gen8-V22.zip (older), only if ever needed.
+  Second sweep with shadows ON: V32 clean (fps not comparable: phone hot), V22 renders black
+  (too old for the a830), v26_b10 stutters (faults). V36 stays. Phase 3's /data/local/tmp/dao
+  (6.4 GB game copy) deleted from the phone; the app's own copy is in Android/data.
+  **Late evening, the breakthrough:** StevenMXZ's Turnip Gen8 **V38** (2026-10-19, Mesa 27.0,
+  github.com/StevenMXZ/Adreno-Tools-Drivers v27.0.0-R1) with shadows on: 50–55 fps in the hall
+  at 734 MHz (V36: 44), 32–40 at 443 MHz (V36: 21–25), no faults. And the shadows-off fault
+  has a name: whitebelyash's release notes say the A830's tiled (GMEM) path page-faults, use
+  `TU_DEBUG=sysmem`. With `TU_DEBUG=sysmem` in env.txt, V38, shadows OFF: **zero faults over
+  minutes**, 40–45 fps at 389 MHz with the phone at 42 °C. New baseline on the phone: V38,
+  TU_DEBUG=sysmem, shadows off, post-processing off. Untested: V38 "Patched" variant, V37.
+  V25.1 (older) was clean but no faster. Heat remains the ceiling (skin 38/40/42 °C steps).
+  **SDL loop fixed** (sdl_window.cpp: poll + own semaphore, 16 ms naps): the loop now wakes
+  62 times a second with no events, `SDLThread` is gone from the hot list; the game's threads
+  take the CPU instead (Eclipse::Update ~60 %, GPU Commands ~60 %, Render ~43 % at ~48 fps).
+  The in-process profiler's 20-s report (dladdr over 10k stacks) costs a second of a core and
+  shows as stutter — DAO_PROFILE removed from env.txt; enable it only when profiling.
+  **Texture LOD bias** (`dao_texture_lod_bias` cvar in the SPIR-V translator, config.toml
+  [xenia]): with 1, V38 + sysmem + shadows off on a cool phone holds the game's own 60 fps cap
+  in the hall (GPU 82–99 % at 832 MHz; before: 50–55 at 99 % / 734 MHz); she sees no quality
+  loss on the phone's screen. Still to see: fps once the phone is hot (was 35–45).
   Her decisions: no frame-rate cap for now (see the maximum); try halving textures; shader
   precision as a last resort. Ideas: shader-side LOD bias +1 (textures sampled one mip smaller,
   no data changes), fp16 (RelaxedPrecision) in the SPIR-V translator, FSR/CAS off.

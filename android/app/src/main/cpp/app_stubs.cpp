@@ -19,19 +19,12 @@ namespace dao::ui
     void TogglePhotoMode() {}
     void ToggleCheats() {}
     bool CheatsAvailable() { return false; }
-    bool KeyboardHoldsInput() { return false; }
     bool CheatsOpen() { return false; }
     uint16_t CheatsFilterButtons(uint16_t buttons) { return buttons; }
     uint16_t PhotoModeFilterButtons(uint16_t buttons) { return buttons; }
     void ShowNotice(std::string text) { LOGW("Notice: {}", text); }
 
-    // No keyboard overlay yet: the default text is the answer, as the console's keyboard
-    // stub gave.
-    std::optional<std::u16string> RunKeyboard(const KeyboardRequest& request)
-    {
-        LOGI("Keyboard: not available yet, answering with the default text");
-        return request.text;
-    }
+    // RunKeyboard and KeyboardHoldsInput: keyboard_android.cpp (an Android dialog).
 }
 
 namespace dao

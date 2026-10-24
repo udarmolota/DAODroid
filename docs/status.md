@@ -13,6 +13,14 @@ entry first. Plan: `PLAN_dao_android_native_port.md`; phase 1 steps: `PHASE1_run
   the recompiler phase 1 built): 66 files updated. The phase 2 probe's leaf table named a
   function the fix merged away → `android/ppc-probe/CMakeLists.txt` now regenerates it when
   `ppc_func_mapping.cpp` is newer. APK rebuilt and installed.
+- LOD bias 2 tried: visibly blurrier textures, and no change in fps or heat (GPU 99 % busy,
+  the governor just runs a lower clock; skin 42 °C, 607 MHz) — back to 1. Worth offering as a
+  user setting later. On-screen pad: A/B/X/Y outlines in the Xbox colours, arrows in the
+  D-pad arms.
+- **Keyboard** (XamShowKeyboardUI): `android/app/src/main/cpp/keyboard_android.cpp` asks
+  `GameActivity.showKeyboard` for an Android dialog with a text field (the game's title,
+  description, default text, max length) and waits for `nativeKeyboardDone`; input is held
+  back while it's open and 300 ms after. She named a new character with it.
 
 ## 2026-10-22 (night 5): PHASE 5 FIRST RUN — the game runs in the app on the S25: videos, menu, sound
 

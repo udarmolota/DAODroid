@@ -62,6 +62,68 @@ public class GameActivity extends SDLActivity {
         }
     }
 
+    // The game's keyboard (XamShowKeyboardUI, e.g. the character's name): an Android dialog
+    // with a text field. Called from the game's thread (keyboard_android.cpp), which waits
+    // until nativeKeyboardDone gives the text, or null when the player cancels.
+    private static native void nativeKeyboardDone(String text);
+
+    @SuppressWarnings("unused") // from native code
+    public void showKeyboard(final String title, final String description, final String text, final int maxLength) {
+        runOnUiThread(() -> {
+            final android.widget.EditText field = new android.widget.EditText(this);
+            field.setSingleLine(true);
+            field.setText(text);
+            field.setSelectAllOnFocus(true);
+            field.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE
+                    | android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+            if (maxLength > 0) {
+                field.setFilters(new android.text.InputFilter[] { new android.text.InputFilter.LengthFilter(maxLength) });
+            }
+            float dp = getResources().getDisplayMetrics().density;
+            android.widget.FrameLayout box = new android.widget.FrameLayout(this);
+            int pad = Math.round(20 * dp);
+            box.setPadding(pad, Math.round(8 * dp), pad, 0);
+            box.addView(field);
+
+            final boolean[] answered = { false };
+            final android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this,
+                    android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                    .setTitle(title == null || title.isEmpty() ? "Dragon Age" : title)
+                    .setMessage(description == null || description.isEmpty() ? null : description)
+                    .setView(box)
+                    .setPositiveButton(android.R.string.ok, (d, w) -> {
+                        answered[0] = true;
+                        nativeKeyboardDone(field.getText().toString());
+                    })
+                    .setNegativeButton(android.R.string.cancel, (d, w) -> {
+                        answered[0] = true;
+                        nativeKeyboardDone(null);
+                    })
+                    .create();
+            dialog.setOnDismissListener(d -> {
+                if (!answered[0]) {
+                    answered[0] = true;
+                    nativeKeyboardDone(null);
+                }
+            });
+            field.setOnEditorActionListener((v, actionId, event) -> {
+                if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE && !answered[0]) {
+                    answered[0] = true;
+                    nativeKeyboardDone(field.getText().toString());
+                    dialog.dismiss();
+                    return true;
+                }
+                return false;
+            });
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().setSoftInputMode(
+                        android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            }
+            dialog.show();
+            field.requestFocus();
+        });
+    }
+
     // The performance bar (fps, CPU, GPU, RAM, thermal), from the launchers; userdata/env.txt
     // DAO_PERF_OVERLAY=0 hides it.
     private static native long nativeGetPresentedFrames();

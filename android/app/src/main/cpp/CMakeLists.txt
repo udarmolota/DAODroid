@@ -66,6 +66,7 @@ add_library(daodroid SHARED
     app_stubs.cpp
     sdl_window.cpp
     virtual_pad_jni.cpp
+    keyboard_android.cpp
     vulkan_private_loader.c)
 target_compile_options(daodroid PRIVATE ${DAO_RUNTIME_OPTIONS})
 # The runtime's kernel imports and hooks register through static initializers: the whole

@@ -29,9 +29,12 @@ public class VirtualPadView extends View {
     private static final String PREFS = "virtual_pad";
 
     private final Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint colorStroke = new Paint(Paint.ANTI_ALIAS_FLAG); // a face button's outline
     private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint pressedFill = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint arrowFill = new Paint(Paint.ANTI_ALIAS_FLAG); // the D-pad's arrows
+    private final android.graphics.Path arrow = new android.graphics.Path();
 
     private boolean shown = true;
     private boolean editing = false;
@@ -58,8 +61,10 @@ public class VirtualPadView extends View {
     // Buttons: circles and rounded rectangles, laid out in onSizeChanged.
     private static final class Button {
         final int bit; final String label; final boolean trigger;
+        int outline; // 0: the common grey; the face buttons have the Xbox colours
         float cx, cy, r, w, h; RectF rect;
         Button(int bit, String label, boolean trigger) { this.bit = bit; this.label = label; this.trigger = trigger; }
+        Button(int bit, String label, int outline) { this(bit, label, false); this.outline = outline; }
         boolean hit(float x, float y) {
             if (rect != null) return rect.contains(x, y);
             float dx = x - cx, dy = y - cy;
@@ -69,8 +74,8 @@ public class VirtualPadView extends View {
     // Trigger "bits" outside the game's button bits.
     private static final int LT = 0x10000, RT = 0x20000;
     private final Button[] buttonList = {
-        new Button(VirtualPad.A, "A", false), new Button(VirtualPad.B, "B", false),
-        new Button(VirtualPad.X, "X", false), new Button(VirtualPad.Y, "Y", false),
+        new Button(VirtualPad.A, "A", 0xD060C040), new Button(VirtualPad.B, "B", 0xD0E04040),
+        new Button(VirtualPad.X, "X", 0xD04090F0), new Button(VirtualPad.Y, "Y", 0xD0F0C830),
         new Button(VirtualPad.LB, "LB", false), new Button(VirtualPad.RB, "RB", false),
         new Button(LT, "LT", true), new Button(RT, "RT", true),
         new Button(VirtualPad.START, "START", false), new Button(VirtualPad.BACK, "BACK", false),
@@ -90,6 +95,8 @@ public class VirtualPadView extends View {
         pressedFill.setStyle(Paint.Style.FILL);
         pressedFill.setColor(0x90C9B38C);
         text.setColor(0xA8FFFFFF);
+        arrowFill.setStyle(Paint.Style.FILL);
+        arrowFill.setColor(0xA8FFFFFF);
         text.setTextAlign(Paint.Align.CENTER);
         editStroke.setStyle(Paint.Style.STROKE);
         editStroke.setColor(0xC0FFD040);
@@ -101,6 +108,8 @@ public class VirtualPadView extends View {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         unit = w / 2560f;                 // Zomdroid's pixel scale
         stroke.setStrokeWidth(4 * unit);
+        colorStroke.setStyle(Paint.Style.STROKE);
+        colorStroke.setStrokeWidth(5 * unit);
         text.setTextSize(44 * unit);
         stickRadius = 160 * unit;
         knobRadius = 90 * unit;
@@ -184,7 +193,12 @@ public class VirtualPadView extends View {
                 canvas.drawRoundRect(b.rect, 20 * unit, 20 * unit, stroke);
             } else {
                 canvas.drawCircle(b.cx, b.cy, b.r, p);
-                canvas.drawCircle(b.cx, b.cy, b.r, stroke);
+                Paint outline = stroke;
+                if (b.outline != 0) {
+                    colorStroke.setColor(b.outline);
+                    outline = colorStroke;
+                }
+                canvas.drawCircle(b.cx, b.cy, b.r, outline);
             }
             canvas.drawText(b.label, b.cx, b.cy + 15 * unit, text);
         }
@@ -201,6 +215,19 @@ public class VirtualPadView extends View {
     private void drawDpadArm(Canvas canvas, float cx, float cy, float t, int bit) {
         canvas.drawCircle(cx, cy, t, (buttons & bit) != 0 ? pressedFill : fill);
         canvas.drawCircle(cx, cy, t, stroke);
+        // An arrow pointing the arm's way, so the four don't look alike.
+        float dx = 0, dy = 0;
+        if (bit == VirtualPad.DPAD_UP) dy = -1;
+        else if (bit == VirtualPad.DPAD_DOWN) dy = 1;
+        else if (bit == VirtualPad.DPAD_LEFT) dx = -1;
+        else dx = 1;
+        float tip = t * 0.45f, back = t * 0.25f, half = t * 0.38f;
+        arrow.reset();
+        arrow.moveTo(cx + dx * tip, cy + dy * tip);
+        arrow.lineTo(cx - dx * back - dy * half, cy - dy * back + dx * half);
+        arrow.lineTo(cx - dx * back + dy * half, cy - dy * back - dx * half);
+        arrow.close();
+        canvas.drawPath(arrow, arrowFill);
     }
 
     private void drawStick(Canvas canvas, float baseX, float baseY, float knobX, float knobY, boolean held) {

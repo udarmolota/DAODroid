@@ -119,19 +119,21 @@ public class VirtualPadView extends View {
         text.setTextSize(44 * unit);
         stickRadius = 160 * unit;
         knobRadius = 90 * unit;
-        leftBaseX = 0.15f * w; leftBaseY = 0.75f * h;
-        rightBaseX = 0.85f * w; rightBaseY = 0.75f * h;
+        // The default layout: the author's own arrangement (started from Zomdroid's default
+        // gamepad layout); a player's dragged positions override it.
+        leftBaseX = 0.168f * w; leftBaseY = 0.8135f * h;
+        rightBaseX = 0.801f * w; rightBaseY = 0.7847f * h;
         leftKnobX = leftBaseX; leftKnobY = leftBaseY; rightKnobX = rightBaseX; rightKnobY = rightBaseY;
         dpadSize = 340 * unit; dpadCx = 0.12f * w; dpadCy = 0.45f * h;
         dpadRect.set(dpadCx - dpadSize / 2, dpadCy - dpadSize / 2, dpadCx + dpadSize / 2, dpadCy + dpadSize / 2);
         float d = 160 * unit, ds = 120 * unit;
-        circle(VirtualPad.A, 0.825f * w, 0.525f * h, d / 2); circle(VirtualPad.B, 0.875f * w, 0.425f * h, d / 2);
-        circle(VirtualPad.X, 0.775f * w, 0.425f * h, d / 2); circle(VirtualPad.Y, 0.825f * w, 0.325f * h, d / 2);
-        circle(VirtualPad.BACK, 0.2f * w, 0.1f * h, ds / 2); circle(VirtualPad.START, 0.8f * w, 0.1f * h, ds / 2);
+        circle(VirtualPad.A, 0.8665f * w, 0.5729f * h, d / 2); circle(VirtualPad.B, 0.9158f * w, 0.4668f * h, d / 2);
+        circle(VirtualPad.X, 0.8168f * w, 0.4668f * h, d / 2); circle(VirtualPad.Y, 0.8653f * w, 0.3575f * h, d / 2);
+        circle(VirtualPad.BACK, 0.16f * w, 0.0741f * h, ds / 2); circle(VirtualPad.START, 0.8288f * w, 0.0612f * h, ds / 2);
         circle(VirtualPad.LEFT_THUMB, 0.05f * w, 0.9f * h, ds / 2); circle(VirtualPad.RIGHT_THUMB, 0.95f * w, 0.9f * h, ds / 2);
         float rw = 240 * unit, rh = 120 * unit;
-        rect(VirtualPad.LB, 0.1f * w, 0.2f * h, rw, rh); rect(VirtualPad.RB, 0.9f * w, 0.2f * h, rw, rh);
-        rect(LT, 0.1f * w, 0.075f * h, rw, rh); rect(RT, 0.9f * w, 0.075f * h, rw, rh);
+        rect(VirtualPad.LB, 0.0695f * w, 0.1888f * h, rw, rh); rect(VirtualPad.RB, 0.9332f * w, 0.2046f * h, rw, rh);
+        rect(LT, 0.0692f * w, 0.074f * h, rw, rh); rect(RT, 0.933f * w, 0.076f * h, rw, rh);
         toggleCx = 0.5f * w; toggleCy = 0.08f * h; toggleR = 48 * unit;
         editStroke.setStrokeWidth(6 * unit);
         // Saved positions, if the pad was edited.

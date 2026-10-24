@@ -374,7 +374,7 @@ class VulkanPresenter final : public Presenter {
         uint32_t height, VkSwapchainKHR old_swapchain,
         uint32_t& present_queue_family_out, VkFormat& image_format_out,
         VkExtent2D& image_extent_out, bool& is_fifo_out,
-        bool& ui_surface_unusable_out);
+        bool& ui_surface_unusable_out, uint32_t& dao_rotation_out);
 
     // Destroys the swapchain and its derivatives, nulls `swapchain` and returns
     // the original swapchain object, if it existed, for use as oldSwapchain if
@@ -437,8 +437,18 @@ class VulkanPresenter final : public Presenter {
     VkSurfaceKHR vulkan_surface = VK_NULL_HANDLE;
     uint32_t present_queue_family = UINT32_MAX;
     VkSwapchainKHR swapchain = VK_NULL_HANDLE;
+    // The swapchain images' (physical) extent; with dao_rotation, portrait while
+    // the guest output is laid out in the swapped (logical, landscape) extent.
     VkExtent2D swapchain_extent = {};
     bool swapchain_is_fifo = false;
+    // DAO: 0, or 90 / 270 when the swapchain is pre-rotated to the Android
+    // surface's transform (dao_present_prerotate): the final pass then draws
+    // the guest output turned, with the rotated bilinear shader, and the
+    // compositor no longer rotates each frame on the GPU.
+    uint32_t dao_rotation = 0;
+    VkPipeline dao_rotated_pipeline = VK_NULL_HANDLE;
+    VkFormat dao_rotated_pipeline_format = VK_FORMAT_UNDEFINED;
+    uint32_t dao_rotated_pipeline_rotation = 0;
     std::vector<VkImage> swapchain_images;
     std::vector<SwapchainFramebuffer> swapchain_framebuffers;
     std::vector<VkSemaphore> swapchain_image_present_semaphores;
@@ -459,8 +469,10 @@ class VulkanPresenter final : public Presenter {
 
   bool InitializeSurfaceIndependent();
 
+  // DAO: fragment_shader replaces the effect's (the rotated bilinear output).
   [[nodiscard]] VkPipeline CreateGuestOutputPaintPipeline(
-      GuestOutputPaintEffect effect, VkRenderPass render_pass);
+      GuestOutputPaintEffect effect, VkRenderPass render_pass,
+      VkShaderModule fragment_shader = VK_NULL_HANDLE);
 
   VulkanDevice* vulkan_device_;
   const UISamplers* ui_samplers_;
@@ -475,6 +487,8 @@ class VulkanPresenter final : public Presenter {
   VkShaderModule guest_output_paint_vs_ = VK_NULL_HANDLE;
   std::array<VkShaderModule, size_t(GuestOutputPaintEffect::kCount)>
       guest_output_paint_fs_ = {};
+  // DAO: the bilinear output turned 90 and 270 degrees (pre-rotation).
+  VkShaderModule dao_rotated_bilinear_fs_[2] = {};
   // Not compatible with the swapchain render pass even if the format is the
   // same due to different dependencies (this is shader read > color
   // attachment > shader read).

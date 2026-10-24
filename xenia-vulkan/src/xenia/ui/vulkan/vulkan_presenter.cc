@@ -48,6 +48,17 @@ DEFINE_bool(
     "may present with tearing if frames don't meet the host display refresh "
     "rate.",
     "Vulkan");
+// DAO: pre-rotation on Android (see PaintContext::dao_rotation).
+DEFINE_bool(dao_present_prerotate, true,
+            "DAO (Android): create the swapchain in the surface's own "
+            "orientation and draw the frame turned, so the compositor doesn't "
+            "rotate every frame on the GPU. Uses the bilinear output (the "
+            "upscaler setting is ignored while it's on).",
+            "Vulkan");
+DEFINE_bool(dao_present_prerotate_flip, false,
+            "DAO (Android): turn the pre-rotated frame the other way (if it "
+            "shows upside down on some device).",
+            "Vulkan");
 DEFINE_bool(
     vulkan_semaphore_reuse_workaround, false,
     "Wait for presentation queue idle before each frame to prevent semaphore "
@@ -62,6 +73,8 @@ namespace vulkan {
 namespace shaders {
 #include "xenia/ui/shaders/bytecode/vulkan_spirv/guest_output_bilinear_dither_ps.h"
 #include "xenia/ui/shaders/bytecode/vulkan_spirv/guest_output_bilinear_ps.h"
+#include "xenia/ui/shaders/bytecode/vulkan_spirv/guest_output_bilinear_rotate270_ps.h"
+#include "xenia/ui/shaders/bytecode/vulkan_spirv/guest_output_bilinear_rotate90_ps.h"
 #include "xenia/ui/shaders/bytecode/vulkan_spirv/guest_output_ffx_cas_resample_dither_ps.h"
 #include "xenia/ui/shaders/bytecode/vulkan_spirv/guest_output_ffx_cas_resample_ps.h"
 #include "xenia/ui/shaders/bytecode/vulkan_spirv/guest_output_ffx_cas_sharpen_dither_ps.h"
@@ -196,6 +209,12 @@ VulkanPresenter::~VulkanPresenter() {
 
   util::DestroyAndNullHandle(dfn.vkDestroyRenderPass, device,
                              guest_output_intermediate_render_pass_);
+  util::DestroyAndNullHandle(dfn.vkDestroyPipeline, device,
+                             paint_context_.dao_rotated_pipeline);
+  for (VkShaderModule& shader_module : dao_rotated_bilinear_fs_) {
+    util::DestroyAndNullHandle(dfn.vkDestroyShaderModule, device,
+                               shader_module);
+  }
   for (VkShaderModule& shader_module : guest_output_paint_fs_) {
     util::DestroyAndNullHandle(dfn.vkDestroyShaderModule, device,
                                shader_module);
@@ -557,7 +576,8 @@ VulkanPresenter::ConnectOrReconnectPaintingToSurfaceFromUIThread(
         vulkan_device_, paint_context_.vulkan_surface, new_surface_width,
         new_surface_height, old_swapchain, paint_context_.present_queue_family,
         new_swapchain_format, paint_context_.swapchain_extent,
-        paint_context_.swapchain_is_fifo, surface_unusable);
+        paint_context_.swapchain_is_fifo, surface_unusable,
+        paint_context_.dao_rotation);
     // Destroy the old swapchain that may be retired now.
     if (old_swapchain != VK_NULL_HANDLE) {
       dfn.vkDestroySwapchainKHR(device, old_swapchain, nullptr);
@@ -648,7 +668,8 @@ VulkanPresenter::ConnectOrReconnectPaintingToSurfaceFromUIThread(
         vulkan_device_, paint_context_.vulkan_surface, new_surface_width,
         new_surface_height, VK_NULL_HANDLE, paint_context_.present_queue_family,
         new_swapchain_format, paint_context_.swapchain_extent,
-        paint_context_.swapchain_is_fifo, surface_unusable);
+        paint_context_.swapchain_is_fifo, surface_unusable,
+        paint_context_.dao_rotation);
     if (paint_context_.swapchain == VK_NULL_HANDLE) {
       // Failed to create the swapchain for the new Vulkan surface - destroy the
       // Vulkan surface.
@@ -930,8 +951,9 @@ VkSwapchainKHR VulkanPresenter::PaintContext::CreateSwapchainForVulkanSurface(
     uint32_t height, VkSwapchainKHR old_swapchain,
     uint32_t& present_queue_family_out, VkFormat& image_format_out,
     VkExtent2D& image_extent_out, bool& is_fifo_out,
-    bool& ui_surface_unusable_out) {
+    bool& ui_surface_unusable_out, uint32_t& dao_rotation_out) {
   ui_surface_unusable_out = false;
+  dao_rotation_out = 0;
 
   const VulkanInstance::Functions& ifn =
       vulkan_device->vulkan_instance()->functions();
@@ -976,6 +998,24 @@ VkSwapchainKHR VulkanPresenter::PaintContext::CreateSwapchainForVulkanSurface(
       image_extent.height > max_framebuffer_extent.height) {
     return VK_NULL_HANDLE;
   }
+  // DAO: pre-rotation. The window's (landscape) size is the logical one; the
+  // images take the surface's natural (portrait) orientation.
+  uint32_t dao_rotation = 0;
+#if XE_PLATFORM_ANDROID
+  if (cvars::dao_present_prerotate) {
+    const VkSurfaceTransformFlagBitsKHR current =
+        surface_capabilities.currentTransform;
+    if ((current == VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+         current == VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) &&
+        (surface_capabilities.supportedTransforms & current) &&
+        image_extent.height <= max_framebuffer_extent.width &&
+        image_extent.width <= max_framebuffer_extent.height) {
+      dao_rotation =
+          current == VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ? 90 : 270;
+      std::swap(image_extent.width, image_extent.height);
+    }
+  }
+#endif
 
   // Get the queue family for presentation.
   uint32_t queue_family_index_present = UINT32_MAX;
@@ -1212,6 +1252,9 @@ VkSwapchainKHR VulkanPresenter::PaintContext::CreateSwapchainForVulkanSurface(
        VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
           ? VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
           : VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR;
+  if (dao_rotation) {
+    swapchain_create_info.preTransform = surface_capabilities.currentTransform;
+  }
   // Prefer opaque to avoid blending in the window system, or let that be
   // specified via the window system if it can't be forced. As a last resort,
   // just pick any - guest output will write alpha of 1 anyway.
@@ -1285,6 +1328,11 @@ VkSwapchainKHR VulkanPresenter::PaintContext::CreateSwapchainForVulkanSurface(
   present_queue_family_out = queue_family_index_present;
   image_format_out = swapchain_create_info.imageFormat;
   image_extent_out = swapchain_create_info.imageExtent;
+  dao_rotation_out = dao_rotation;
+  if (dao_rotation) {
+    XELOGI("VulkanPresenter: the swapchain is pre-rotated by {} degrees",
+           dao_rotation);
+  }
   is_fifo_out =
       swapchain_create_info.presentMode == VK_PRESENT_MODE_FIFO_KHR ||
       swapchain_create_info.presentMode == VK_PRESENT_MODE_FIFO_RELAXED_KHR;
@@ -1552,10 +1600,47 @@ Presenter::PaintResult VulkanPresenter::PaintAndPresentImpl(
   if (guest_output_image) {
     VkExtent2D max_framebuffer_extent =
         util::GetMax2DFramebufferExtent(vulkan_device_->properties());
+    // DAO: with pre-rotation, the guest output is laid out in the logical
+    // (swapped) extent, and drawn with the rotated bilinear shader.
+    const uint32_t dao_rotation = paint_context_.dao_rotation;
+    const uint32_t dao_logical_width =
+        dao_rotation ? paint_context_.swapchain_extent.height
+                     : paint_context_.swapchain_extent.width;
+    const uint32_t dao_logical_height =
+        dao_rotation ? paint_context_.swapchain_extent.width
+                     : paint_context_.swapchain_extent.height;
+    if (dao_rotation) {
+      guest_output_paint_config.SetEffect(
+          GuestOutputPaintConfig::Effect::kBilinear);
+    }
     GuestOutputPaintFlow guest_output_flow = GetGuestOutputPaintFlow(
-        guest_output_properties, paint_context_.swapchain_extent.width,
-        paint_context_.swapchain_extent.height, max_framebuffer_extent.width,
-        max_framebuffer_extent.height, guest_output_paint_config);
+        guest_output_properties, dao_logical_width, dao_logical_height,
+        max_framebuffer_extent.width, max_framebuffer_extent.height,
+        guest_output_paint_config);
+    // DAO: a logical rectangle of the final pass in the physical image.
+    auto dao_rotate_rect = [&](int32_t& x, int32_t& y, uint32_t& w,
+                               uint32_t& h) {
+      if (!dao_rotation) {
+        return;
+      }
+      const int32_t lx = x, ly = y;
+      const uint32_t lw = w, lh = h;
+      bool clockwise = dao_rotation == 90;
+      if (cvars::dao_present_prerotate_flip) {
+        clockwise = !clockwise;
+      }
+      if (clockwise) {
+        // Physical (x', y') = (H - 1 - y, x), H = the logical height.
+        x = int32_t(dao_logical_height) - (ly + int32_t(lh));
+        y = lx;
+      } else {
+        // Physical (x', y') = (y, W - 1 - x), W = the logical width.
+        x = ly;
+        y = int32_t(dao_logical_width) - (lx + int32_t(lw));
+      }
+      w = lh;
+      h = lw;
+    };
     if (guest_output_flow.effect_count) {
       // Store the main target reference to the guest output image so it's not
       // destroyed while it's still potentially in use by main target painting
@@ -1779,7 +1864,38 @@ Presenter::PaintResult VulkanPresenter::PaintAndPresentImpl(
               dfn.vkDestroyPipeline, device,
               swapchain_effect_pipeline.swapchain_pipeline);
         }
-        if (swapchain_effect_pipeline.swapchain_pipeline == VK_NULL_HANDLE) {
+        if (dao_rotation) {
+          // The rotated bilinear pipeline, for the swapchain's format and the
+          // rotation direction.
+          bool clockwise = dao_rotation == 90;
+          if (cvars::dao_present_prerotate_flip) {
+            clockwise = !clockwise;
+          }
+          const uint32_t rotation = clockwise ? 90 : 270;
+          if (paint_context_.dao_rotated_pipeline != VK_NULL_HANDLE &&
+              (paint_context_.dao_rotated_pipeline_format !=
+                   paint_context_.swapchain_render_pass_format ||
+               paint_context_.dao_rotated_pipeline_rotation != rotation)) {
+            paint_context_.completion_timeline
+                .AwaitSubmissionAndUpdateCompleted(
+                    paint_context_.guest_output_image_paint_last_submission);
+            util::DestroyAndNullHandle(dfn.vkDestroyPipeline, device,
+                                       paint_context_.dao_rotated_pipeline);
+          }
+          if (paint_context_.dao_rotated_pipeline == VK_NULL_HANDLE) {
+            paint_context_.dao_rotated_pipeline = CreateGuestOutputPaintPipeline(
+                GuestOutputPaintEffect::kBilinear,
+                paint_context_.swapchain_render_pass,
+                dao_rotated_bilinear_fs_[clockwise ? 0 : 1]);
+            paint_context_.dao_rotated_pipeline_format =
+                paint_context_.swapchain_render_pass_format;
+            paint_context_.dao_rotated_pipeline_rotation = rotation;
+          }
+          if (paint_context_.dao_rotated_pipeline == VK_NULL_HANDLE) {
+            guest_output_flow.effect_count = 0;
+          }
+        } else if (swapchain_effect_pipeline.swapchain_pipeline ==
+                   VK_NULL_HANDLE) {
           assert_true(CanGuestOutputPaintEffectBeFinal(swapchain_effect));
           assert_true(guest_output_paint_fs_[size_t(swapchain_effect)] !=
                       VK_NULL_HANDLE);
@@ -1820,6 +1936,8 @@ Presenter::PaintResult VulkanPresenter::PaintAndPresentImpl(
           if (is_final_effect) {
             effect_rect_x = guest_output_flow.output_x;
             effect_rect_y = guest_output_flow.output_y;
+            dao_rotate_rect(effect_rect_x, effect_rect_y,
+                            effect_rect_size.first, effect_rect_size.second);
             dfn.vkCmdBeginRenderPass(draw_command_buffer,
                                      &swapchain_render_pass_begin_info,
                                      VK_SUBPASS_CONTENTS_INLINE);
@@ -1870,6 +1988,9 @@ Presenter::PaintResult VulkanPresenter::PaintAndPresentImpl(
           VkPipeline effect_vulkan_pipeline =
               is_final_effect ? effect_pipeline.swapchain_pipeline
                               : effect_pipeline.intermediate_pipeline;
+          if (is_final_effect && dao_rotation) {
+            effect_vulkan_pipeline = paint_context_.dao_rotated_pipeline;
+          }
           assert_true(effect_vulkan_pipeline != VK_NULL_HANDLE);
           dfn.vkCmdBindPipeline(draw_command_buffer,
                                 VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -1927,6 +2048,12 @@ Presenter::PaintResult VulkanPresenter::PaintAndPresentImpl(
             case kGuestOutputPaintPipelineLayoutIndexBilinear: {
               effect_constants_size = sizeof(effect_constants.bilinear);
               effect_constants.bilinear.Initialize(guest_output_flow, i);
+              if (is_final_effect && dao_rotation) {
+                // The rotated shader: the offset of the physical rectangle,
+                // the logical size.
+                effect_constants.bilinear.output_offset[0] = effect_rect_x;
+                effect_constants.bilinear.output_offset[1] = effect_rect_y;
+              }
             } break;
             case kGuestOutputPaintPipelineLayoutIndexCasSharpen: {
               effect_constants_size = sizeof(effect_constants.cas_sharpen);
@@ -1973,14 +2100,17 @@ Presenter::PaintResult VulkanPresenter::PaintAndPresentImpl(
                 const GuestOutputPaintFlow::ClearRectangle&
                     letterbox_clear_rectangle =
                         guest_output_flow.letterbox_clear_rectangles[i];
-                letterbox_clear_vulkan_rectangle.rect.offset.x =
-                    int32_t(letterbox_clear_rectangle.x);
-                letterbox_clear_vulkan_rectangle.rect.offset.y =
-                    int32_t(letterbox_clear_rectangle.y);
+                int32_t clear_x = int32_t(letterbox_clear_rectangle.x);
+                int32_t clear_y = int32_t(letterbox_clear_rectangle.y);
+                uint32_t clear_width = letterbox_clear_rectangle.width;
+                uint32_t clear_height = letterbox_clear_rectangle.height;
+                dao_rotate_rect(clear_x, clear_y, clear_width, clear_height);
+                letterbox_clear_vulkan_rectangle.rect.offset.x = clear_x;
+                letterbox_clear_vulkan_rectangle.rect.offset.y = clear_y;
                 letterbox_clear_vulkan_rectangle.rect.extent.width =
-                    letterbox_clear_rectangle.width;
+                    clear_width;
                 letterbox_clear_vulkan_rectangle.rect.extent.height =
-                    letterbox_clear_rectangle.height;
+                    clear_height;
                 letterbox_clear_vulkan_rectangle.baseArrayLayer = 0;
                 letterbox_clear_vulkan_rectangle.layerCount = 1;
               }
@@ -2357,6 +2487,21 @@ bool VulkanPresenter::InitializeSurfaceIndependent() {
     }
   }
 
+  // DAO: the rotated bilinear output (pre-rotation).
+  for (uint32_t i = 0; i < 2; ++i) {
+    shader_module_create_info.codeSize =
+        i ? sizeof(shaders::guest_output_bilinear_rotate270_ps)
+          : sizeof(shaders::guest_output_bilinear_rotate90_ps);
+    shader_module_create_info.pCode =
+        i ? shaders::guest_output_bilinear_rotate270_ps
+          : shaders::guest_output_bilinear_rotate90_ps;
+    if (dfn.vkCreateShaderModule(device, &shader_module_create_info, nullptr,
+                                 &dao_rotated_bilinear_fs_[i]) != VK_SUCCESS) {
+      XELOGE("VulkanPresenter: Failed to create the rotated output shader");
+      return false;
+    }
+  }
+
   VkAttachmentDescription intermediate_render_pass_attachment;
   intermediate_render_pass_attachment.flags = 0;
   intermediate_render_pass_attachment.format = kGuestOutputFormat;
@@ -2515,7 +2660,8 @@ bool VulkanPresenter::InitializeSurfaceIndependent() {
 }
 
 VkPipeline VulkanPresenter::CreateGuestOutputPaintPipeline(
-    GuestOutputPaintEffect effect, VkRenderPass render_pass) {
+    GuestOutputPaintEffect effect, VkRenderPass render_pass,
+    VkShaderModule fragment_shader) {
   VkPipelineShaderStageCreateInfo stages[2] = {};
   for (uint32_t i = 0; i < 2; ++i) {
     VkPipelineShaderStageCreateInfo& stage = stages[i];
@@ -2524,7 +2670,9 @@ VkPipeline VulkanPresenter::CreateGuestOutputPaintPipeline(
     stage.pName = "main";
   }
   stages[0].module = guest_output_paint_vs_;
-  stages[1].module = guest_output_paint_fs_[size_t(effect)];
+  stages[1].module = fragment_shader != VK_NULL_HANDLE
+                         ? fragment_shader
+                         : guest_output_paint_fs_[size_t(effect)];
   assert_true(stages[1].module != VK_NULL_HANDLE);
 
   VkPipelineVertexInputStateCreateInfo vertex_input_state = {};

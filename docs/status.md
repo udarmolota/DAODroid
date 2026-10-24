@@ -21,6 +21,23 @@ entry first. Plan: `PLAN_dao_android_native_port.md`; phase 1 steps: `PHASE1_run
   `GameActivity.showKeyboard` for an Android dialog with a text field (the game's title,
   description, default text, max length) and waits for `nativeKeyboardDone`; input is held
   back while it's open and 300 ms after. She named a new character with it.
+- **Pre-rotation**: SurfaceFlinger showed the game's layer CLIENT-composed with ROT_90 (the
+  GPU rotating every frame; the pad overlay above is DEVICE). The presenter now creates the
+  swapchain in the surface's transform and draws the frame turned (bilinear only; see
+  xenia-vulkan/PATCHES.md). Built natively, not yet checked on the phone.
+- **Android defaults** (her settings): bilinear output, no temporal upscaler, dynamic shadows
+  and post-processing off (settings.h), skip_intro_logos on (patches.cpp),
+  dao_texture_lod_bias 1, and the app sets TU_DEBUG=sysmem unless env.txt sets it.
+  Existing config.toml values still win.
+- Pre-rotation checked on the phone: 1080x2340 swapchain pre-rotated by 90°, the picture the
+  right way up, a steady 60 fps for minutes on a cool phone (layer composition not read yet).
+- **Physical gamepad works** (her 26-minute session, BSP-D11 pad with a fan, seen by SDL as
+  "BSP-D11 Consumer Control"): much better than the touch pad. With the game's frame cap at
+  30 the heat stays manageable. No crashes, no new errors in the log (only the known
+  "unknown Xenia option" lines for the D3D12-only settings and the harmless XAM/XConfig ones).
+- Portraits (issue #7 upstream): reproduced on Windows too — only on the first load after a
+  cold start; a load within the same session shows them. Synchronous pipeline creation
+  (d3d12_pipeline_creation_threads = 0) doesn't change it. Logs and saves sent to 96dot.
 
 ## 2026-10-22 (night 5): PHASE 5 FIRST RUN — the game runs in the app on the S25: videos, menu, sound
 

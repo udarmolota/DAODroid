@@ -34,6 +34,8 @@ public class VirtualPadView extends View {
     private final Paint pressedFill = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint arrowFill = new Paint(Paint.ANTI_ALIAS_FLAG); // the D-pad's arrows
+    private final Paint iconStroke = new Paint(Paint.ANTI_ALIAS_FLAG); // Back's and Start's icons
+    private final RectF iconOval = new RectF();
     private final android.graphics.Path arrow = new android.graphics.Path();
 
     private boolean shown = true;
@@ -97,6 +99,9 @@ public class VirtualPadView extends View {
         text.setColor(0xA8FFFFFF);
         arrowFill.setStyle(Paint.Style.FILL);
         arrowFill.setColor(0xA8FFFFFF);
+        iconStroke.setStyle(Paint.Style.STROKE);
+        iconStroke.setStrokeCap(Paint.Cap.ROUND);
+        iconStroke.setColor(0xA8FFFFFF);
         text.setTextAlign(Paint.Align.CENTER);
         editStroke.setStyle(Paint.Style.STROKE);
         editStroke.setColor(0xC0FFD040);
@@ -110,6 +115,7 @@ public class VirtualPadView extends View {
         stroke.setStrokeWidth(4 * unit);
         colorStroke.setStyle(Paint.Style.STROKE);
         colorStroke.setStrokeWidth(5 * unit);
+        iconStroke.setStrokeWidth(7 * unit);
         text.setTextSize(44 * unit);
         stickRadius = 160 * unit;
         knobRadius = 90 * unit;
@@ -200,7 +206,9 @@ public class VirtualPadView extends View {
                 }
                 canvas.drawCircle(b.cx, b.cy, b.r, outline);
             }
-            canvas.drawText(b.label, b.cx, b.cy + 15 * unit, text);
+            if (b.bit == VirtualPad.BACK) drawMenuIcon(canvas, b.cx, b.cy, b.r);
+            else if (b.bit == VirtualPad.START) drawPowerIcon(canvas, b.cx, b.cy, b.r);
+            else canvas.drawText(b.label, b.cx, b.cy + 15 * unit, text);
         }
         // D-pad: a cross of four arms.
         float arm = dpadSize / 2, t = dpadSize / 6;
@@ -210,6 +218,22 @@ public class VirtualPadView extends View {
         drawDpadArm(canvas, dpadCx + arm - t, dpadCy, t, VirtualPad.DPAD_RIGHT);
         drawStick(canvas, leftBaseX, leftBaseY, leftKnobX, leftKnobY, leftStickPointer >= 0);
         drawStick(canvas, rightBaseX, rightBaseY, rightKnobX, rightKnobY, rightStickPointer >= 0);
+    }
+
+    // Back: three bars (a "menu" icon).
+    private void drawMenuIcon(Canvas canvas, float cx, float cy, float r) {
+        float half = r * 0.42f, gap = r * 0.28f;
+        for (int i = -1; i <= 1; i++) {
+            canvas.drawLine(cx - half, cy + i * gap, cx + half, cy + i * gap, iconStroke);
+        }
+    }
+
+    // Start: the power symbol, a ring open at the top with a bar through the gap.
+    private void drawPowerIcon(Canvas canvas, float cx, float cy, float r) {
+        float ring = r * 0.42f;
+        iconOval.set(cx - ring, cy - ring + r * 0.05f, cx + ring, cy + ring + r * 0.05f);
+        canvas.drawArc(iconOval, -60, 300, false, iconStroke);
+        canvas.drawLine(cx, cy - r * 0.55f, cx, cy - r * 0.08f, iconStroke);
     }
 
     private void drawDpadArm(Canvas canvas, float cx, float cy, float t, int bit) {

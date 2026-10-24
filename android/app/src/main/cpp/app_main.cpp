@@ -199,6 +199,9 @@ namespace
 
 int main(int argc, char* argv[])
 {
+    // Turnip on the Adreno 830: its tiled (GMEM) rendering page-faults the GPU (seen with
+    // the engine's shadows off), so render to system memory unless env.txt says otherwise.
+    setenv("TU_DEBUG", "sysmem", 0);
     const Options options = ParseOptions(argc, argv);
     const fs::path gameRoot = options.installRoot / "game";
     const fs::path userRoot = options.installRoot / "userdata";

@@ -27,7 +27,12 @@
 // texture one mip smaller (half the width and height): less texture bandwidth
 // on a phone's GPU, a softer picture. Explicit-LOD fetches (render target
 // reads, the game's own LOD selection) are left alone.
-DEFINE_int32(dao_texture_lod_bias, 0,
+#if XE_PLATFORM_ANDROID
+static constexpr int32_t kDaoTextureLodBiasDefault = 1;  // the phone's GPU
+#else
+static constexpr int32_t kDaoTextureLodBiasDefault = 0;
+#endif
+DEFINE_int32(dao_texture_lod_bias, kDaoTextureLodBiasDefault,
              "DAO: added to the LOD of mip-mapped texture fetches with a "
              "computed LOD (1 = one mip smaller, half resolution).",
              "GPU");

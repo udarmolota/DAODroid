@@ -83,3 +83,17 @@ config.toml's `[xenia]`) is added to the LOD of every mip-mapped fetch with a co
 after the fetch constant's and the instruction's biases. 1 = one mip smaller everywhere (the
 effect of halving the textures, with no data changed). Explicit-LOD fetches are untouched.
 Baked into the translated SPIR-V, so it applies from the next start.
+
+## Pre-rotation on Android (2026-10-24)
+
+The Android compositor was rotating every frame on the GPU (SurfaceFlinger: the game's layer
+CLIENT-composed, ROT_90) because the swapchain was created with preTransform IDENTITY in the
+landscape window size. `ui/vulkan/vulkan_presenter.{h,cc}`: with `dao_present_prerotate`
+(default on, Android only) and a surface whose currentTransform is ROTATE_90/270, the swapchain
+takes the surface's natural (portrait) extent and preTransform = currentTransform; the guest
+output flow is laid out in the logical (swapped) extent, forced to the bilinear effect, and its
+final pass draws with `ui/shaders/guest_output_bilinear_rotate{90,270}.ps.xesl` (DAO's own, in
+`xenia-vulkan/src/xenia/ui/shaders/`, compiled by the same SPIR-V step) into the rotated
+rectangle; letterbox clears are rotated too. `dao_present_prerotate_flip` turns the other way
+if a device shows the frame upside down. The presenter's UI drawers (ImGui) don't know about
+the rotation (none are used on Android yet).

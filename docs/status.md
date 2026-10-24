@@ -3,6 +3,17 @@
 One short file, updated at the end of every working session (DAORecomp playbook rule). Newest
 entry first. Plan: `PLAN_dao_android_native_port.md`; phase 1 steps: `PHASE1_runbook.md`.
 
+## 2026-10-24: upstream Aeducan Thaig fix merged
+
+- DAORecomp upstream (96dot) `7da0e07` fixes a crash entering Aeducan Thaig (a switch in a
+  leaf without .pdata was split by XenonRecomp; new switch table + function bounds) and
+  `0211a02` (launcher update check, not used on Android). Merged into the submodule's
+  `daodroid` branch (`b3c71f6`, no conflicts, not pushed to the fork yet).
+- Regenerated `recomp/ppc/` with DAORecomp's own recompile step (installer/pipeline.recompile,
+  the recompiler phase 1 built): 66 files updated. The phase 2 probe's leaf table named a
+  function the fix merged away → `android/ppc-probe/CMakeLists.txt` now regenerates it when
+  `ppc_func_mapping.cpp` is newer. APK rebuilt and installed.
+
 ## 2026-10-22 (night 5): PHASE 5 FIRST RUN — the game runs in the app on the S25: videos, menu, sound
 
 - `android/app/`: Gradle project (AGP 8.13.2, wrapper from RimDroid, minSdk 29, NDK 27.3),

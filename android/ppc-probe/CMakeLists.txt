@@ -72,7 +72,11 @@ endif()
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 set(DAO_GEN ${CMAKE_BINARY_DIR}/gen)
 file(MAKE_DIRECTORY ${DAO_GEN})
-if (NOT EXISTS ${DAO_GEN}/leaf_funcs.inc)
+# Regenerated whenever the recompiled code changes (a new translation can merge or drop
+# functions the old table names).
+set(_dao_mapping ${DAO_PPC_DIR}/ppc_func_mapping.cpp)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${_dao_mapping})
+if (NOT EXISTS ${DAO_GEN}/leaf_funcs.inc OR ${_dao_mapping} IS_NEWER_THAN ${DAO_GEN}/leaf_funcs.inc)
     execute_process(COMMAND ${Python3_EXECUTABLE} -I ${DAO_ROOT}/scripts/find_leaf_funcs.py --min-lines 6 --max 0
                             --csv ${DAO_GEN}/leaf_funcs.csv
                     RESULT_VARIABLE _r1 OUTPUT_VARIABLE _o1)

@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="12dp"
+            android:paddingBottom="24dp">
+
+            <!-- The game: its banner, faded, with the details on it. -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/DaoCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <!-- At least the banner's height, taller when the details need it. -->
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="140dp">
+
+                    <ImageView
+                        android:id="@+id/banner"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:alpha="0.28"
+                        android:contentDescription="@null"
+                        android:scaleType="centerCrop" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:id="@+id/name"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceTitleLarge"
+                            android:textColor="@color/dao_red_dark" />
+
+                        <TextView
+                            android:id="@+id/details"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:textAppearance="?attr/textAppearanceBodySmall"
+                            android:textColor="@color/dao_ink" />
+                    </LinearLayout>
+                </FrameLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Vulkan driver. -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/DaoCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    style="@style/DaoCardContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        style="@style/DaoCardTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setting_driver" />
+
+                    <Spinner
+                        android:id="@+id/driver"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/driver_pick"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setting_driver_pick" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Graphics. -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/DaoCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    style="@style/DaoCardContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        style="@style/DaoCardTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_graphics" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/setting_lod"
+                        android:textAppearance="?attr/textAppearanceTitleSmall" />
+
+                    <RadioGroup
+                        android:id="@+id/lod"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <com.google.android.material.radiobutton.MaterialRadioButton
+                            android:id="@+id/lod_full"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/lod_full" />
+
+                        <com.google.android.material.radiobutton.MaterialRadioButton
+                            android:id="@+id/lod_low"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/lod_low" />
+
+                        <com.google.android.material.radiobutton.MaterialRadioButton
+                            android:id="@+id/lod_ultra_low"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/lod_ultra_low" />
+                    </RadioGroup>
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/prerotate"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/setting_prerotate" />
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/perf"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setting_perf" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Advanced, folded. -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/DaoCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    style="@style/DaoCardContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <LinearLayout
+                        android:id="@+id/advanced_header"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/DaoCardTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/settings_advanced" />
+
+                        <ImageView
+                            android:id="@+id/advanced_chevron"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_expand"
+                            app:tint="@color/dao_red_dark" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/advanced"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="@string/setting_sysmem"
+                            android:textAppearance="?attr/textAppearanceTitleSmall" />
+
+                        <Spinner
+                            android:id="@+id/sysmem"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="@string/settings_env"
+                            android:textAppearance="?attr/textAppearanceTitleSmall" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="@string/settings_env_help"
+                            android:textAppearance="?attr/textAppearanceBodySmall" />
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:hint="@string/settings_env_hint">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/env"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="monospace"
+                                android:gravity="top"
+                                android:inputType="textMultiLine|textNoSuggestions"
+                                android:minLines="2"
+                                android:textSize="13sp" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

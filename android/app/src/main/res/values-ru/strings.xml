@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="launcher_empty">Игры пока нет.\n\nСоберите пакет игры со своего диска Xbox 360 на ПК, скопируйте файл .daopkg на телефон и добавьте его кнопкой внизу.</string>
+    <string name="launcher_add">Добавить игру</string>
+    <string name="launcher_import_title">Добавить эту игру?</string>
+    <string name="launcher_import_message">%1$s\n%2$s\n\nЗаймёт %3$s на телефоне (свободно: %4$s).\n\nЭтот пакет — ваша личная копия игры: не раздавайте его.</string>
+    <string name="launcher_import_go">Добавить</string>
+    <string name="launcher_importing">Добавляю игру…</string>
+    <string name="launcher_import_failed">Не удалось добавить игру</string>
+    <string name="launcher_no_space">Не хватает места: игре нужно %1$s, свободно %2$s.</string>
+
+    <string name="instance_play">Играть</string>
+    <string name="instance_settings">Настройки</string>
+    <string name="instance_export_log">Отправить последний лог</string>
+    <string name="instance_delete">Удалить</string>
+    <string name="instance_delete_confirm">Удалить «%1$s»? Отменить будет нельзя.</string>
+    <string name="instance_no_log">Лога пока нет: сначала запустите игру.</string>
+
+    <string name="setting_driver">Драйвер Vulkan</string>
+    <string name="setting_driver_pick">Выбрать файл драйвера (.so или .zip)…</string>
+    <string-array name="drivers">
+        <item>Встроенный Turnip (Adreno 8xx)</item>
+        <item>Родной драйвер телефона</item>
+        <item>Свой драйвер</item>
+    </string-array>
+    <string name="setting_sysmem">Режим отрисовки Turnip (TU_DEBUG=sysmem)</string>
+    <string-array name="sysmem">
+        <item>Авто (включён для Adreno 8xx)</item>
+        <item>Включён</item>
+        <item>Выключен</item>
+    </string-array>
+    <string name="setting_lod">Текстуры</string>
+    <string-array name="lod">
+        <item>Полная (самая чёткая)</item>
+        <item>Половина (по умолчанию, быстрее)</item>
+        <item>Четверть (самая быстрая, мыльная)</item>
+    </string-array>
+    <string name="setting_prerotate">Поворачивать кадр заранее (меньше работы GPU, простое масштабирование)</string>
+    <string name="setting_perf">Панель производительности</string>
+    <string name="driver_installed">Драйвер установлен: %1$s</string>
+    <string name="driver_not_found">В этом файле нет драйвера .so.</string>
+    <string name="launcher_empty_title">Игры пока нет</string>
+    <string name="launcher_how">Как добавить игру</string>
+    <string name="launcher_how_text">1. На ПК соберите пакет игры со своего диска Dragon Age: Origins для Xbox 360 (английское/итальянское/испанское издание или диск 1 Ultimate Edition) ПК-программой DAODroid.\n\n2. Скопируйте файл .daopkg на телефон (кабелем, через облако, мессенджером).\n\n3. Нажмите + и выберите файл. Лаунчер проверит его и скопирует игру.\n\n4. Нажмите «Играть».\n\nПакет — ваша личная копия игры: не раздавайте его.</string>
+    <string name="nav_install_driver">Установить драйвер</string>
+    <string name="nav_install_saves">Установить сохранения (.zip)</string>
+    <string name="nav_pad_editor">Раскладка экранного геймпада</string>
+    <string name="nav_about">О программе</string>
+    <string name="about_text">DAODroid: Dragon Age: Origins (Xbox 360) на Android, на основе DAORecomp от 96dot, Vulkan-бэкенда Xenia и Turnip из Mesa. Сделано с помощью ИИ.\n\nКода и данных игры в приложении нет: каждый собирает свой пакет игры со своего диска.\n\nDragon Age — товарный знак Electronic Arts; проект не связан с EA и BioWare.</string>
+    <string name="instance_more">Ещё</string>
+    <string name="instance_delete_go">Удалить</string>
+    <string name="saves_installed">Сохранения установлены: файлов %1$d</string>
+    <string name="pad_reset">Сбросить</string>
+    <string name="pad_done">Готово</string>
+    <string name="saves_export">Экспорт сохранений (.zip)</string>
+    <string name="saves_import">Импорт сохранений (.zip)</string>
+    <string name="saves_exported">Сохранения экспортированы: файлов %1$d</string>
+    <string name="instance_delete_dev_confirm">Удалить игру сборки разработки «%1$s» вместе с сохранениями? Если сохранения нужны, сначала экспортируйте их. Добавленные игры не пострадают.</string>
+    <string name="bug_report_title">Сообщить об ошибке</string>
+    <string name="bug_report_intro">Что-то пошло не так? Отправьте отчёт. В нём логи игры, по ним видно, что случилось.</string>
+    <string name="bug_report_game">Игра</string>
+    <string name="bug_report_what">Что войдёт в отчёт</string>
+    <string name="bug_report_inc_log">Лог игры (dao.log)</string>
+    <string name="bug_report_inc_logcat">Лог Android для DAODroid (logcat)</string>
+    <string name="bug_report_inc_config">Настройки игры (config.toml, env.txt)</string>
+    <string name="bug_report_inc_crash">Записи о вылетах</string>
+    <string name="bug_report_always">Модель телефона, версия Android, GPU и сборка игры добавляются всегда. Сохранений и файлов игры в отчёте нет.</string>
+    <string name="bug_report_steps">1. Выберите игру выше.\n2. Нажмите «Отправить по почте».\n3. Выберите почтовое приложение (Gmail, Outlook…).\n4. Напишите пару слов о том, что случилось, и отправьте.</string>
+    <string name="bug_report_send_email">Отправить по почте</string>
+    <string name="bug_report_no_email_title">Нет почтового приложения?</string>
+    <string name="bug_report_no_email_text">Сохраните отчёт в файл и отправьте его с любого устройства на этот адрес. Приложите файл и напишите пару слов о том, что случилось.</string>
+    <string name="bug_report_copy">Скопировать</string>
+    <string name="bug_report_copied">Адрес скопирован</string>
+    <string name="bug_report_save_file">Сохранить отчёт в файл</string>
+    <string name="bug_report_saved">Отчёт сохранён</string>
+    <string name="bug_report_no_mail_app">Почтовое приложение не найдено: сохраните отчёт в файл.</string>
+    <string name="settings_graphics">Графика</string>
+    <string name="settings_env">Переменные окружения</string>
+    <string name="settings_env_help">KEY=VALUE, по одной на строку, для отладки: TU_DEBUG=sysmem (Turnip), DAO_PERF_OVERLAY=0, DAO_PROFILE=20 (профиль CPU в dao.log), DAO_GPU_FRAME_TRACE=&lt;кадр&gt;. Важнее настроек выше. Сохраняются в userdata/env.txt при выходе с экрана.</string>
+    <string name="settings_env_hint">например, TU_DEBUG=sysmem</string>
+    <string name="cache_import">Скопировать кэш шейдеров из другой игры</string>
+    <string name="cache_imported">Кэш шейдеров: файлов %1$d из «%2$s»</string>
+    <string name="cache_no_other">Нет другой игры, из которой можно взять кэш шейдеров.</string>
+    <string name="cache_import_to">В какую игру скопировать кэш шейдеров?</string>
+    <string name="cache_import_from">Откуда взять</string>
+    <string name="cache_up_to_date">У «%1$s» уже такой кэш шейдеров: копировать нечего.</string>
+    <string name="settings_advanced">Дополнительно</string>
+    <string name="lod_full">Полные</string>
+    <string name="lod_low">Низкие (по умолчанию)</string>
+    <string name="lod_ultra_low">Очень низкие</string>
+</resources>

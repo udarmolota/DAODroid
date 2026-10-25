@@ -1,4 +1,94 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">DAODroid</string>
+
+    <string name="launcher_empty">No game yet.\n\nBuild a game package from your own Xbox 360 disc on your PC, copy the .daopkg file to this phone, and add it with the button below.</string>
+    <string name="launcher_add">Add game</string>
+    <string name="launcher_import_title">Add this game?</string>
+    <string name="launcher_import_message">%1$s\n%2$s\n\nIt takes %3$s on this phone (free: %4$s).\n\nThis package is your own copy of the game: don\'t share it.</string>
+    <string name="launcher_import_go">Add</string>
+    <string name="launcher_importing">Adding the game…</string>
+    <string name="launcher_import_failed">Couldn\'t add the game</string>
+    <string name="launcher_no_space">Not enough free space: the game needs %1$s, %2$s is free.</string>
+
+    <string name="instance_play">Play</string>
+    <string name="instance_settings">Settings</string>
+    <string name="instance_export_log">Share the last log</string>
+    <string name="instance_delete">Delete</string>
+    <string name="instance_delete_confirm">Delete \"%1$s\"? This can\'t be undone.</string>
+    <string name="instance_no_log">No log yet: play once first.</string>
+
+    <string name="setting_driver">Vulkan driver</string>
+    <string name="setting_driver_pick">Choose a driver file (.so or .zip)…</string>
+    <string-array name="drivers">
+        <item>Built-in Turnip (Adreno 8xx)</item>
+        <item>The phone\'s own driver</item>
+        <item>Custom driver</item>
+    </string-array>
+    <string name="setting_sysmem">Turnip rendering mode (TU_DEBUG=sysmem)</string>
+    <string-array name="sysmem">
+        <item>Auto (on for Adreno 8xx)</item>
+        <item>On</item>
+        <item>Off</item>
+    </string-array>
+    <string name="setting_lod">Textures</string>
+    <string-array name="lod">
+        <item>Full (sharpest)</item>
+        <item>Half (default, faster)</item>
+        <item>Quarter (fastest, blurry)</item>
+    </string-array>
+    <string name="setting_prerotate">Pre-rotate the frame (saves GPU work; uses plain scaling)</string>
+    <string name="setting_perf">Performance overlay</string>
+    <string name="driver_installed">Driver installed: %1$s</string>
+    <string name="driver_not_found">No .so driver in that file.</string>
+    <string name="launcher_empty_title">No game yet</string>
+    <string name="launcher_how">How to add a game</string>
+    <string name="launcher_how_text">1. On your PC, build a game package from your own Xbox 360 disc of Dragon Age: Origins (the English/Italian/Spanish edition, or disc 1 of its Ultimate Edition) with DAODroid\'s PC tool.\n\n2. Copy the .daopkg file to this phone (a cable, a cloud drive, a messenger).\n\n3. Tap + and pick the file. The launcher checks it and copies the game in.\n\n4. Tap Play.\n\nThe package is your own copy of the game: don\'t share it.</string>
+    <string name="nav_install_driver">Install a driver</string>
+    <string name="nav_install_saves">Install saves (.zip)</string>
+    <string name="nav_pad_editor">On-screen gamepad layout</string>
+    <string name="nav_about">About</string>
+    <string name="about_text">DAODroid: Dragon Age: Origins (Xbox 360) on Android, built on DAORecomp by 96dot, Xenia\'s Vulkan backend and Mesa\'s Turnip. Made with the help of AI.\n\nNo game code or data comes with this app: each player builds their own game package from their own disc.\n\nDragon Age is a trademark of Electronic Arts; this project is not affiliated with EA or BioWare.</string>
+    <string name="instance_more">More</string>
+    <string name="instance_delete_go">Delete</string>
+    <string name="saves_installed">Saves installed: %1$d files</string>
+    <string name="pad_reset">Reset</string>
+    <string name="pad_done">Done</string>
+    <string name="saves_export">Export saves (.zip)</string>
+    <string name="saves_import">Import saves (.zip)</string>
+    <string name="saves_exported">Saves exported: %1$d files</string>
+    <string name="instance_delete_dev_confirm">Delete the development build\'s game \"%1$s\" with its saves? Export the saves first if you want to keep them. Added games aren\'t touched.</string>
+    <string name="bug_report_title">Report a bug</string>
+    <string name="bug_report_intro">Something went wrong? Send a report. It carries the game\'s logs, so we can see what happened.</string>
+    <string name="bug_report_game">Game</string>
+    <string name="bug_report_what">What goes into the report</string>
+    <string name="bug_report_inc_log">The game\'s log (dao.log)</string>
+    <string name="bug_report_inc_logcat">Android\'s log of DAODroid (logcat)</string>
+    <string name="bug_report_inc_config">The game\'s settings (config.toml, env.txt)</string>
+    <string name="bug_report_inc_crash">Crash records</string>
+    <string name="bug_report_always">The phone\'s model, Android version, GPU and the game\'s build are always included. No saves, no game files.</string>
+    <string name="bug_report_steps">1. Choose the game above.\n2. Tap Send by email.\n3. Pick your mail app (Gmail, Outlook…).\n4. Write a few words about what happened and send.</string>
+    <string name="bug_report_send_email">Send by email</string>
+    <string name="bug_report_no_email_title">No mail app on this device?</string>
+    <string name="bug_report_no_email_text">Save the report to a file, then send it from any device to this address. Attach the file and write a few words about what happened.</string>
+    <string name="bug_report_email" translatable="false">210478@mail.ru</string>
+    <string name="bug_report_copy">Copy</string>
+    <string name="bug_report_copied">Address copied</string>
+    <string name="bug_report_save_file">Save the report to a file</string>
+    <string name="bug_report_saved">Report saved</string>
+    <string name="bug_report_no_mail_app">No mail app found: save the report to a file instead.</string>
+    <string name="settings_graphics">Graphics</string>
+    <string name="settings_env">Environment variables</string>
+    <string name="settings_env_help">KEY=VALUE, one per line, for troubleshooting: TU_DEBUG=sysmem (Turnip), DAO_PERF_OVERLAY=0, DAO_PROFILE=20 (CPU profile in dao.log), DAO_GPU_FRAME_TRACE=&lt;frame&gt;. They win over the settings above. Saved to userdata/env.txt when you leave this screen.</string>
+    <string name="settings_env_hint">e.g. TU_DEBUG=sysmem</string>
+    <string name="cache_import">Copy the shader cache from another game</string>
+    <string name="cache_imported">Shader cache: %1$d files from %2$s</string>
+    <string name="cache_no_other">No other game to copy the shader cache from.</string>
+    <string name="cache_import_to">Which game gets the shader cache?</string>
+    <string name="cache_import_from">Copy it from</string>
+    <string name="cache_up_to_date">%1$s already has this shader cache: nothing to copy.</string>
+    <string name="settings_advanced">Advanced</string>
+    <string name="lod_full">Full</string>
+    <string name="lod_low">Low (default)</string>
+    <string name="lod_ultra_low">Ultra low</string>
 </resources>

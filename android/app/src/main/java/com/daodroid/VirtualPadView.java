@@ -421,7 +421,35 @@ public class VirtualPadView extends View {
     }
 
     private void send() {
-        VirtualPad.nativeSetState(buttons, leftX, leftY, rightX, rightY, leftTrigger, rightTrigger);
+        if (sendsToGame) VirtualPad.nativeSetState(buttons, leftX, leftY, rightX, rightY, leftTrigger, rightTrigger);
+        invalidate();
+    }
+
+    // ---------------------------------------------------------------- the launcher's editor
+
+    /** False in the launcher's layout editor: no game is running to receive the state. */
+    boolean sendsToGame = true;
+
+    /** The editor: starts in edit mode. */
+    void startEditing() {
+        editing = true;
+        shown = true;
+        invalidate();
+    }
+
+    /** Leaves edit mode, keeping the positions. */
+    void finishEditing() {
+        if (editing) {
+            editing = false;
+            savePositions();
+        }
+        invalidate();
+    }
+
+    /** Back to the default layout (the dragged positions are forgotten). */
+    void resetLayout() {
+        prefs.edit().clear().apply();
+        onSizeChanged(getWidth(), getHeight(), getWidth(), getHeight());
         invalidate();
     }
 }

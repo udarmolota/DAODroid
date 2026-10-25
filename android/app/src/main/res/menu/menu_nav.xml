@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:id="@+id/group_game">
+        <item
+            android:id="@+id/nav_add"
+            android:icon="@drawable/ic_add"
+            android:title="@string/launcher_add" />
+        <item
+            android:id="@+id/nav_driver"
+            android:icon="@drawable/ic_memory"
+            android:title="@string/nav_install_driver" />
+        <item
+            android:id="@+id/nav_saves_export"
+            android:icon="@drawable/ic_save"
+            android:title="@string/saves_export" />
+        <item
+            android:id="@+id/nav_saves_import"
+            android:icon="@drawable/ic_save"
+            android:title="@string/saves_import" />
+        <item
+            android:id="@+id/nav_cache"
+            android:icon="@drawable/ic_memory"
+            android:title="@string/cache_import" />
+        <item
+            android:id="@+id/nav_pad"
+            android:icon="@drawable/ic_gamepad"
+            android:title="@string/nav_pad_editor" />
+    </group>
+    <group android:id="@+id/group_help">
+        <item
+            android:id="@+id/nav_bug"
+            android:icon="@drawable/ic_bug"
+            android:title="@string/bug_report_title" />
+        <item
+            android:id="@+id/nav_how"
+            android:icon="@drawable/ic_help"
+            android:title="@string/launcher_how" />
+        <item
+            android:id="@+id/nav_about"
+            android:icon="@drawable/ic_info"
+            android:title="@string/nav_about" />
+    </group>
+</menu>

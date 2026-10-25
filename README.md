@@ -62,8 +62,12 @@ The first build takes about 15 minutes (52,000 translated functions). The APK is
 that is what lets you copy the game into the app's folder over USB (step 3).
 
 The app has two variants: `dev`, the one above, with the game built in, and `launcher`
-(`assembleLauncherDebug`), without any game code, which runs a game package instead. The
-launcher and the PC tool that makes game packages are in progress; until then, use `dev`.
+(`assembleLauncherDebug`), without any game code, which imports game packages
+([docs/PACKAGE_FORMAT.md](docs/PACKAGE_FORMAT.md)): Add game (+) picks a `.daopkg`, checks it and
+copies it in; each game then has its own settings (driver, graphics, environment variables),
+saves (export/import), shader cache and bug report. A package is made with
+`scripts/make_package.py build --game <install/game> --library <the dev build's libdaodroid.so>`;
+the one-step PC tool (disc image in, package out) is in progress.
 
 ### 3. Installing on the phone
 

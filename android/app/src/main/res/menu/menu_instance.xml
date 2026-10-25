@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A card's menu: what the side menu and the settings screen don't have. -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/instance_delete"
+        android:title="@string/instance_delete" />
+</menu>

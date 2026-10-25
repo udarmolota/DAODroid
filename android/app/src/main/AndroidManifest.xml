@@ -10,6 +10,18 @@
 
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- The bug report's "Send by email" lists the mail apps (package visibility). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="application/zip" />
+        </intent>
+    </queries>
+
     <application
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
@@ -23,6 +35,42 @@
         <!-- The back button is the game's (SDL maps it to a key). -->
         <meta-data android:name="SDL_ENV.SDL_ANDROID_TRAP_BACK_BUTTON" android:value="1" />
 
+        <!-- The launcher: the installed games, adding a game package, each game's settings. -->
+        <activity
+            android:name=".LauncherActivity"
+            android:label="@string/app_name"
+            android:theme="@style/LauncherTheme"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".BugReportActivity"
+            android:theme="@style/LauncherTheme"
+            android:exported="false" />
+        <activity
+            android:name=".PadEditorActivity"
+            android:screenOrientation="landscape"
+            android:theme="@style/AppTheme"
+            android:exported="false" />
+        <activity
+            android:name=".InstanceActivity"
+            android:theme="@style/LauncherTheme"
+            android:exported="false" />
+
+        <!-- Shares copies of logs (InstanceActivity). -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <activity
             android:name=".GameActivity"
             android:label="@string/app_name"
@@ -31,10 +79,6 @@
             android:configChanges="layoutDirection|locale|orientation|uiMode|screenLayout|screenSize|smallestScreenSize|keyboard|keyboardHidden|navigation"
             android:screenOrientation="landscape"
             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
             <!-- A USB gamepad plugged in while the game runs. -->
             <intent-filter>
                 <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />

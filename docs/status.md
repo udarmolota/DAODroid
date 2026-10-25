@@ -67,6 +67,38 @@ entry first. Plan: `PLAN_dao_android_native_port.md`; phase 1 steps: `PHASE1_run
   library hash, game totals), `lib/arm64-v8a/libdaodroid.so`, `game/...`, optional
   `title_update/`. `scripts/make_package.py build|check`; a test package from install/game and
   the dev build's library: 9451 files, 6.72 GB, built in a few minutes, check OK.
+- **Launcher v1** (compiles, not yet on the phone): `LauncherActivity` (the instances, "Add game"
+  → the system file picker → `PackageImporter` reads manifest.json, checks format/abi/disc and
+  free space, streams the stored ZIP with a progress dialog, checks the library's SHA-256),
+  `InstanceActivity` (details, Play, driver: built-in Turnip Gen8 V38 / the phone's own /
+  a custom .so or .zip; sysmem auto/on/off; texture LOD 0/1/2; pre-rotation; the performance
+  bar; share the last log; delete), `Instance` (instance.json; `files/dao/instances/<id>/`
+  plus the library in internal files), `XeniaConfig` (writes [xenia] options into the
+  instance's config.toml before a start). The dev APK lists its own game as "development".
+  GameActivity runs the instance from the intent. English and Russian strings. AndroidX
+  appcompat 1.7.0 + material 1.12.0. The built-in Turnip is
+  `jniLibs/arm64-v8a/libvulkan_turnip_gen8.so` (V38, gitignored like every .so: a CI build
+  will have to fetch it).
+- Launcher v1 checked on the phone: the test package imported and the instance ran from it.
+- **Launcher redesign** (her launchers' layout, compiles, not yet on the phone): white with the
+  poster's red (#A80F0F) as the accent (Material 3 light), her dao_logo.png as the adaptive
+  icon and in the header; a drawer (add a game, install a driver, install saves from a .zip,
+  the on-screen pad's layout editor, share the log, how to add a game, about); instance cards
+  with a banner, Play, settings and a more menu. The banner is the game's own
+  `game/splash.dds` from the player's disc (decoded from DXT1 by `Banner`, cached as the
+  instance's banner.jpg): the APK carries no EA artwork. `PadEditorActivity` edits the pad's
+  layout outside the game (`VirtualPadView.sendsToGame = false`). Material icons (Apache 2.0).
+- Launcher, after her review: the card's menu holds only Delete (the rest is in the side
+  menu); saves export/import (.zip of userdata/content/454108C0/00000001); a delete for the
+  development entry that leaves the instances; the shader cache copied from the warmest other
+  instance on import, and from the side menu; a bug report screen as in Zomdroid (pick the
+  game and what goes in: dao.log, logcat, config/env, crash records; device and build always;
+  by email to the mail apps only, or saved to a file, address 210478@mail.ru); the settings
+  screen as cards (the banner faded under the details, Vulkan driver, Graphics with texture
+  radio buttons Full / Low (default) / Ultra low, Advanced folded: Turnip mode and the
+  environment variables editing env.txt). Her saves moved from the development entry into
+  the imported instance. The Vulkan validation layer moved to the dev flavor
+  (`src/dev/jniLibs`); the launcher APK is 24.8 MB: SDL3, the driver hook, the built-in Turnip.
 
 ## 2026-10-22 (night 5): PHASE 5 FIRST RUN — the game runs in the app on the S25: videos, menu, sound
 

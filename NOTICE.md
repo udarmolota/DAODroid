@@ -13,8 +13,12 @@ code from, the following projects, each under its own license:
 | SIMD Everywhere (SIMDe) | via XenonRecomp's `thirdparty/` | MIT |
 | SDL 3 | `recomp/thirdparty/SDL` (downloaded) | zlib |
 | FFmpeg (has207/xenia fork, XMA decoding) | downloaded into `recomp/tools/xenia-canary/third_party/` | LGPL 2.1+ |
-| Mesa Turnip (Vulkan driver for Adreno): a build for the phone's GPU, pushed to the phone for the headless runs; to be bundled by the app | not in the repository (phase 5: `android/`) | MIT |
-| Code reused from the author's own launchers (Zomdroid, RimDroid, ValDroid, PriDroid) | `launcher-java/` (to come) | as in those repositories |
+| Mesa Turnip (Vulkan driver for Adreno): StevenMXZ's Turnip Gen8 V38 build (Mesa 27.0), bundled in the APK as the built-in driver | `android/app/src/main/jniLibs/arm64-v8a/libvulkan_turnip_gen8.so` (not in the repository; from github.com/StevenMXZ/Adreno-Tools-Drivers, release v27.0.0-R1) | MIT |
+| liblinkernsbypass (Billy Laws): linker namespaces for the private Vulkan loader | `android/app/src/main/cpp/linkernsbypass/` | BSD 2-Clause |
+| AndroidX AppCompat, Material Components for Android (the launcher's screens) | Gradle dependencies | Apache-2.0 |
+| Material Design icons (Google): the launcher's icons | `android/app/src/main/res/drawable/ic_*.xml` | Apache-2.0 |
+| Khronos Vulkan validation layer (debugging, dev builds only) | `android/app/src/dev/jniLibs/` (not in the repository) | Apache-2.0 |
+| Code reused from the author's own launchers (Zomdroid, RimDroid, ValDroid): the performance bar, the on-screen gamepad's layout, the private Vulkan loader, the launcher's structure | `android/app/` | as in those repositories |
 
 Design references that contributed no code: mw2-android / MW2 Recompiled (GPL-3.0),
 Rayman Origins Recomp, Pinyon Shift.

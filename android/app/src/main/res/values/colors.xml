@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The launcher's two colours, from the game's own poster: white, and its blood red. -->
+    <color name="dao_red">#A80F0F</color>
+    <color name="dao_red_dark">#7E0000</color>
+    <color name="dao_red_light">#FFDAD6</color>
+    <color name="dao_white">#FFFFFF</color>
+    <color name="dao_ink">#201A19</color>
+    <color name="dao_ink_soft">#5C4F4E</color>
+    <color name="dao_surface">#FFF8F7</color>
+</resources>

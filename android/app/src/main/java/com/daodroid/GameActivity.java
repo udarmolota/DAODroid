@@ -15,14 +15,18 @@ import java.util.List;
 
 /**
  * The game's activity: SDL's, with the game library (libdaodroid.so, the runtime and the
- * translated game code) as the main one. The game's files live in the app's external files
- * folder, {@code Android/data/com.daodroid/files/dao/{game,userdata}} (DAORecomp's install/game
- * copied there); a Vulkan driver to run on instead of the phone's own (a Turnip build) is the
- * first .so in {@code files/dao/driver/}. Phase 5: no launcher screen yet, the game starts at
- * once; what's missing is logged to logcat (tag DAODroid) and userdata/dao.log.
+ * translated game code) as the main one. It runs one instance (Instance, chosen in the
+ * launcher; without one, the development build's game in {@code files/dao/}), with that
+ * instance's files ({@code game/}, {@code userdata/}, {@code driver/}) and settings. What's
+ * missing is logged to logcat (tag DAODroid) and the instance's userdata/dao.log.
  */
 public class GameActivity extends SDLActivity {
     private static final String TAG = "DAODroid";
+    /** The built-in Turnip (Mesa, MIT): Turnip Gen8 V38 for the Adreno 8xx, in the APK's libraries. */
+    static final String BUILTIN_DRIVER = "libvulkan_turnip_gen8.so";
+
+    /** The instance being played; set from the intent before SDL starts. */
+    private static Instance current;
 
     @Override
     protected String[] getLibraries() {
@@ -46,7 +50,14 @@ public class GameActivity extends SDLActivity {
     public void loadLibraries() {
         System.loadLibrary("SDL3");
         File packaged = new File(installRoot(this), "libdaodroid.so");
-        if (packaged.isFile()) {
+        if (current != null && current.library != null) {
+            if (!current.library.isFile()) {
+                throw new UnsatisfiedLinkError("This game's library is missing: add the game package again");
+            }
+            System.load(current.library.getAbsolutePath());
+            gameLibrary = current.library.getAbsolutePath();
+            Log.i(TAG, "Game library: instance " + current.id);
+        } else if (packaged.isFile()) {
             File internal = copyToInternal(packaged, "game");
             if (internal == null) {
                 throw new UnsatisfiedLinkError("Couldn't copy the game library " + packaged);
@@ -80,9 +91,10 @@ public class GameActivity extends SDLActivity {
     protected String[] getArguments() {
         List<String> args = new ArrayList<>();
         File install = installRoot(this);
-        applyEnvFile(new File(new File(install, "userdata"), "env.txt"));
+        applyInstanceSettings();
+        applyEnvFile(new File(new File(install, "userdata"), "env.txt")); // env.txt wins
         args.add(install.getAbsolutePath());
-        File driver = vulkanDriver(install);
+        File driver = chosenDriver(install);
         if (driver != null) {
             args.add("--vulkan-driver=" + driver.getAbsolutePath());
             args.add("--native-lib-dir=" + getApplicationInfo().nativeLibraryDir);
@@ -95,6 +107,9 @@ public class GameActivity extends SDLActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        String id = getIntent() != null ? getIntent().getStringExtra(InstanceActivity.EXTRA_ID) : null;
+        current = id != null ? Instance.open(this, id)
+                : (Instance.apkHasGameLibrary(this) ? Instance.open(this, Instance.DEV_ID) : null);
         File install = installRoot(this);
         File game = new File(install, "game");
         if (!new File(game, "default.xex").isFile()) {
@@ -193,7 +208,7 @@ public class GameActivity extends SDLActivity {
     private void setUpPerfOverlay() {
         // getArguments (the game's env) runs later, on SDL's thread: read env.txt here too.
         applyEnvFile(new File(new File(installRoot(this), "userdata"), "env.txt"));
-        if ("0".equals(envOverrides.get("DAO_PERF_OVERLAY"))) {
+        if ("0".equals(envOverrides.get("DAO_PERF_OVERLAY")) || (current != null && !current.perfOverlay)) {
             return;
         }
         float dp = getResources().getDisplayMetrics().density;
@@ -251,27 +266,55 @@ public class GameActivity extends SDLActivity {
         }
     }
 
-    /** {@code Android/data/com.daodroid/files/dao}: game/ and userdata/ in it. */
+    /** The instance's folder (game/, userdata/, driver/), or {@code files/dao} without one. */
     static File installRoot(Context context) {
-        File external = context.getExternalFilesDir(null);
-        File root = new File(external != null ? external : context.getFilesDir(), "dao");
+        File root = current != null ? current.root : Instance.daoRoot(context);
         //noinspection ResultOfMethodCallIgnored
         new File(root, "userdata").mkdirs();
         return root;
     }
 
+    /** The instance's settings into the game's environment and its config.toml. */
+    private void applyInstanceSettings() {
+        if (current == null) return;
+        switch (current.sysmem) {
+            case Instance.SYSMEM_ON: nativeSetenv("TU_DEBUG", "sysmem"); break;
+            case Instance.SYSMEM_OFF: nativeSetenv("TU_DEBUG", ""); break; // set: the library's Adreno 8xx default stays off
+            default: break; // the library decides from the GPU
+        }
+        File config = new File(current.userdata(), "config.toml");
+        try {
+            XeniaConfig.set(config, "dao_texture_lod_bias", String.valueOf(current.textureLodBias));
+            XeniaConfig.set(config, "dao_present_prerotate", current.prerotate ? "true" : "false");
+        } catch (java.io.IOException e) {
+            Log.w(TAG, "config.toml: " + e);
+        }
+        Log.i(TAG, "Instance " + current.id + ": driver " + current.driver + ", sysmem " + current.sysmem
+                + ", texture LOD " + current.textureLodBias + ", prerotate " + current.prerotate);
+    }
+
     /**
-     * The first .so in install/driver, if any, copied into the app's internal files (code
-     * can't be mapped from the shared storage), where it is returned from.
+     * The Vulkan driver the instance chose, copied into the app's internal files when it comes
+     * from the shared storage (code can't be mapped from there), or null for the phone's own.
      */
-    File vulkanDriver(File install) {
+    File chosenDriver(File install) {
+        String choice = current != null ? current.driver : Instance.DRIVER_CUSTOM;
+        if (Instance.DRIVER_SYSTEM.equals(choice)) {
+            return null;
+        }
+        if (Instance.DRIVER_BUILTIN.equals(choice)) {
+            File builtin = new File(getApplicationInfo().nativeLibraryDir, BUILTIN_DRIVER);
+            if (builtin.isFile()) return builtin;
+            Log.w(TAG, "No built-in driver in this APK; using the phone's own");
+            return null;
+        }
         File[] files = new File(install, "driver").listFiles();
         if (files == null) {
             return null;
         }
         for (File file : files) {
             if (file.isFile() && file.getName().endsWith(".so")) {
-                return copyToInternal(file, "driver");
+                return copyToInternal(file, current != null && !current.isDev() ? "driver/" + current.id : "driver");
             }
         }
         return null;

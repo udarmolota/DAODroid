@@ -1,8 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Fullscreen, no title, black until the first frame. -->
+    <!-- The game: fullscreen, no title, black until the first frame. -->
     <style name="AppTheme" parent="@android:style/Theme.NoTitleBar.Fullscreen">
         <item name="android:windowBackground">@android:color/black</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+
+    <!-- The launcher's screens: white, with the poster's red as the accent. -->
+    <style name="LauncherTheme" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/dao_red</item>
+        <item name="colorOnPrimary">@color/dao_white</item>
+        <item name="colorPrimaryContainer">@color/dao_red_light</item>
+        <item name="colorOnPrimaryContainer">@color/dao_red_dark</item>
+        <item name="colorSecondary">@color/dao_red_dark</item>
+        <item name="colorOnSecondary">@color/dao_white</item>
+        <item name="colorSecondaryContainer">@color/dao_red_light</item>
+        <item name="colorOnSecondaryContainer">@color/dao_red_dark</item>
+        <item name="colorTertiary">@color/dao_red</item>
+        <item name="android:colorBackground">@color/dao_white</item>
+        <item name="colorSurface">@color/dao_white</item>
+        <item name="colorSurfaceContainer">@color/dao_surface</item>
+        <item name="colorSurfaceContainerLow">@color/dao_surface</item>
+        <item name="colorOnSurface">@color/dao_ink</item>
+        <item name="colorOnSurfaceVariant">@color/dao_ink_soft</item>
+        <item name="android:statusBarColor">@color/dao_white</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@color/dao_white</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+
+    <!-- The settings screen's cards. -->
+    <style name="DaoCard" parent="Widget.Material3.CardView.Filled">
+        <item name="cardBackgroundColor">@color/dao_surface</item>
+        <item name="cardCornerRadius">16dp</item>
+        <item name="android:layout_marginTop">12dp</item>
+    </style>
+    <style name="DaoCardContent">
+        <item name="android:orientation">vertical</item>
+        <item name="android:padding">16dp</item>
+    </style>
+    <style name="DaoCardTitle">
+        <item name="android:textAppearance">?attr/textAppearanceTitleMedium</item>
+        <item name="android:textColor">@color/dao_red_dark</item>
+        <item name="android:layout_marginBottom">4dp</item>
     </style>
 </resources>

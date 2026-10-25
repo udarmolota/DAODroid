@@ -91,12 +91,6 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleLauncherDebug assembleLauncherRelease
 
-      - name: Show the release APK's signer
-        shell: bash
-        run: |
-          APKSIGNER=$(ls "$ANDROID_SDK_ROOT"/build-tools/*/apksigner | sort -V | tail -n 1)
-          "$APKSIGNER" verify --print-certs android/app/build/outputs/apk/launcher/release/app-launcher-release.apk | grep -E 'Signer #1 certificate (DN|SHA-256)'
-
       - name: Remove the key store
         if: always()
         run: rm -f "$RUNNER_TEMP/release.keystore" android/keystore.properties
@@ -114,3 +108,13 @@ jobs:
           name: daodroid-launcher-release-${{ steps.app_version.outputs.name }}
           path: android/app/build/outputs/apk/launcher/release/app-launcher-release.apk
           retention-days: 30
+
+      # Who signed the release APK (the release key, or Android Debug without the secrets).
+      # Informational only: it never fails the build.
+      - name: Show the release APK's signer
+        continue-on-error: true
+        shell: bash
+        run: |
+          APKSIGNER=$(ls "$ANDROID_SDK_ROOT"/build-tools/*/apksigner | sort -V | tail -n 1)
+          echo "$APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs android/app/build/outputs/apk/launcher/release/app-launcher-release.apk

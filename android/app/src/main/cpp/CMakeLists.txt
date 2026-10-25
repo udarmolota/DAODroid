@@ -36,9 +36,15 @@ set(SDL_GPU OFF CACHE BOOL "" FORCE)
 set(SDL_RENDER OFF CACHE BOOL "" FORCE)
 add_subdirectory(${RECOMP}/thirdparty/SDL ${CMAKE_BINARY_DIR}/sdl)
 
+# DAO_LAUNCHER_ONLY: the launcher APK, without the game library (no translated code needed to
+# build it; the game library comes in the player's game package).
+option(DAO_LAUNCHER_ONLY "Build only SDL3 and the driver hook (the launcher APK)" OFF)
+
 # ---------------------------------------------------------------- the runtime
 
-add_subdirectory(${DAO_ROOT}/android/runtime ${CMAKE_BINARY_DIR}/runtime)
+if (NOT DAO_LAUNCHER_ONLY)
+    add_subdirectory(${DAO_ROOT}/android/runtime ${CMAKE_BINARY_DIR}/runtime)
+endif()
 
 # ---------------------------------------------------------------- private Vulkan loader
 
@@ -58,6 +64,10 @@ target_compile_options(vkdriverhook PRIVATE -fvisibility=hidden -Wall -Wextra)
 target_link_options(vkdriverhook PRIVATE -Wl,-z,global -Wl,-z,max-page-size=16384)
 
 # ---------------------------------------------------------------- the game library
+
+if (DAO_LAUNCHER_ONLY)
+    return()
+endif()
 
 add_library(daodroid SHARED
     ${DAO_SRC}/input/input.cpp

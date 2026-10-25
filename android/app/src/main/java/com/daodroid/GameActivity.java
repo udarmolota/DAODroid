@@ -29,6 +29,53 @@ public class GameActivity extends SDLActivity {
         return new String[] { "SDL3", "daodroid" };
     }
 
+    // The game library (libdaodroid.so: the runtime, Xenia and the translated game code). A
+    // game package built on the PC puts it at dao/libdaodroid.so; it is copied into the app's
+    // internal files (code can't be mapped from the shared storage) and loaded from there.
+    // Without one, the copy built into this APK is used (the development build); a launcher
+    // build has none and asks for a package.
+    //
+    // The version of the interface between this Java side and the library (JNI methods, SDL,
+    // command-line options). Keep in step with DAO_ABI_VERSION in cpp/dao_abi.h.
+    static final int DAO_ABI = 1;
+    private String gameLibrary;
+
+    private static native int nativeAbiVersion();
+
+    @Override
+    public void loadLibraries() {
+        System.loadLibrary("SDL3");
+        File packaged = new File(installRoot(this), "libdaodroid.so");
+        if (packaged.isFile()) {
+            File internal = copyToInternal(packaged, "game");
+            if (internal == null) {
+                throw new UnsatisfiedLinkError("Couldn't copy the game library " + packaged);
+            }
+            System.load(internal.getAbsolutePath());
+            gameLibrary = internal.getAbsolutePath();
+            Log.i(TAG, "Game library: from the game package (" + packaged + ")");
+        } else {
+            try {
+                System.loadLibrary("daodroid");
+            } catch (UnsatisfiedLinkError e) {
+                throw new UnsatisfiedLinkError("No game package: put the one you built on your PC into "
+                        + installRoot(this) + " (see the README)");
+            }
+            gameLibrary = getApplicationInfo().nativeLibraryDir + "/libdaodroid.so";
+            Log.i(TAG, "Game library: the one built into the APK");
+        }
+        int abi = nativeAbiVersion();
+        if (abi != DAO_ABI) {
+            throw new UnsatisfiedLinkError("The game package was built for launcher version " + abi
+                    + ", this launcher is version " + DAO_ABI + ": build the package again with the matching tools");
+        }
+    }
+
+    @Override
+    protected String getMainSharedObject() {
+        return gameLibrary != null ? gameLibrary : super.getMainSharedObject();
+    }
+
     @Override
     protected String[] getArguments() {
         List<String> args = new ArrayList<>();
@@ -224,21 +271,26 @@ public class GameActivity extends SDLActivity {
         }
         for (File file : files) {
             if (file.isFile() && file.getName().endsWith(".so")) {
-                File internal = new File(new File(getFilesDir(), "driver"), file.getName());
-                if (!internal.isFile() || internal.length() != file.length() || internal.lastModified() < file.lastModified()) {
-                    try {
-                        //noinspection ResultOfMethodCallIgnored
-                        internal.getParentFile().mkdirs();
-                        java.nio.file.Files.copy(file.toPath(), internal.toPath(),
-                                java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                    } catch (java.io.IOException e) {
-                        Log.e(TAG, "Vulkan driver: copying " + file + " failed", e);
-                        return null;
-                    }
-                }
-                return internal;
+                return copyToInternal(file, "driver");
             }
         }
         return null;
+    }
+
+    /** A copy of file in the app's internal files/dir (refreshed when the original changes). */
+    File copyToInternal(File file, String dir) {
+        File internal = new File(new File(getFilesDir(), dir), file.getName());
+        if (!internal.isFile() || internal.length() != file.length() || internal.lastModified() < file.lastModified()) {
+            try {
+                //noinspection ResultOfMethodCallIgnored
+                internal.getParentFile().mkdirs();
+                java.nio.file.Files.copy(file.toPath(), internal.toPath(),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } catch (java.io.IOException e) {
+                Log.e(TAG, "Copying " + file + " failed", e);
+                return null;
+            }
+        }
+        return internal;
     }
 }

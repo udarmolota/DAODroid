@@ -199,9 +199,23 @@ namespace
 
 int main(int argc, char* argv[])
 {
-    // Turnip on the Adreno 830: its tiled (GMEM) rendering page-faults the GPU (seen with
-    // the engine's shadows off), so render to system memory unless env.txt says otherwise.
-    setenv("TU_DEBUG", "sysmem", 0);
+    // Turnip on the Adreno 8xx: its tiled (GMEM) rendering page-faults the GPU (seen with
+    // the engine's shadows off on the 830), so render to system memory there unless env.txt
+    // says otherwise. Older Adrenos keep the faster tiled path; when the GPU's name can't be
+    // read, the safe choice.
+    {
+        char model[64] = {};
+        if (FILE* f = fopen("/sys/class/kgsl/kgsl-3d0/gpu_model", "r"))
+        {
+            if (!fgets(model, sizeof(model), f))
+                model[0] = 0;
+            fclose(f);
+        }
+        if (!model[0] || strncmp(model, "Adreno8", 7) == 0)
+            setenv("TU_DEBUG", "sysmem", 0);
+        __android_log_print(ANDROID_LOG_INFO, "DAODroid", "GPU %s, TU_DEBUG=%s", model[0] ? model : "(unknown)",
+            getenv("TU_DEBUG") ? getenv("TU_DEBUG") : "(unset)");
+    }
     const Options options = ParseOptions(argc, argv);
     const fs::path gameRoot = options.installRoot / "game";
     const fs::path userRoot = options.installRoot / "userdata";

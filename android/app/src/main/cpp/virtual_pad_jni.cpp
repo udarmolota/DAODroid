@@ -4,6 +4,7 @@
 
 #include <jni.h>
 
+#include "dao_abi.h"
 #include "input/input.h"
 #include "xenia/gpu/d3d12/dao_frame_trace.h"
 
@@ -17,4 +18,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_daodroid_VirtualPad_nativeSetState(JN
 extern "C" JNIEXPORT jlong JNICALL Java_com_daodroid_GameActivity_nativeGetPresentedFrames(JNIEnv*, jclass)
 {
     return jlong(xe::gpu::dao_trace::SwapCount());
+}
+
+// The interface version this library was built for (GameActivity.DAO_ABI must match).
+extern "C" JNIEXPORT jint JNICALL Java_com_daodroid_GameActivity_nativeAbiVersion(JNIEnv*, jclass)
+{
+    return DAO_ABI_VERSION;
 }

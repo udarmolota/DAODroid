@@ -38,6 +38,28 @@ entry first. Plan: `PLAN_dao_android_native_port.md`; phase 1 steps: `PHASE1_run
 - Portraits (issue #7 upstream): reproduced on Windows too — only on the first load after a
   cold start; a load within the same session shows them. Synchronous pipeline creation
   (d3d12_pipeline_creation_threads = 0) doesn't change it. Logs and saves sent to 96dot.
+- **Launcher split, step 1** (her decision: publishable launcher + per-player game package).
+  Rather than splitting the runtime from the translated code (DAORecomp's hooks override
+  recompiled functions by symbol; across two DSOs the game's own weak copies could win), the
+  whole libdaodroid.so goes into the player's package and the launcher holds no game code:
+  GameActivity.loadLibraries loads `dao/libdaodroid.so` (copied to internal files) when it
+  exists, else the APK's own (dev); `nativeAbiVersion` vs `GameActivity.DAO_ABI` (cpp/dao_abi.h)
+  refuses a mismatched package. Gradle flavors `dev` (bundles the library) and `launcher`
+  (`-DDAO_LAUNCHER_ONLY=ON`: SDL3 + vkdriverhook only, configures without recomp/ppc). Both
+  compile; not yet run on the phone. Note: the launcher build still needs SDL's source from
+  recomp/thirdparty (fetched by DAORecomp's installer) — to vendor or fetch for a CI build.
+- **Portraits, root cause** (96dot, issue #7, fixed in dev.7 / upstream `e013da4`): Xenia's
+  TruncateStdioFile didn't seek after truncating, so every write to the pipeline storage
+  failed once it had been read; the cache never grew, every cold start re-created the
+  pipelines, and the one-shot portrait draw was skipped while its pipeline was being made.
+  Also in filesystem_posix.cc: the phone's `454108C0.fbo.vk.xpso` was stuck at 8 KB. Merged
+  into `daodroid` (`88074a0`), dev APK rebuilt and installed; dev.7 downloaded for the PC.
+- That alone didn't help the phone: the log said "Loaded 0 shaders from storage" at every
+  start and the files shrank. `shader_storage.h` opens both storage files "a+b" and reads the
+  header at once; on bionic (BSD stdio) an append stream starts at the end (Windows and glibc:
+  at the start), so the header always read as missing and the storage was reset each time.
+  Fix: seek to the start before reading (both files). After it the cache grows across starts
+  and the portraits show right after a cold load. To offer upstream (the POSIX side of #7).
 
 ## 2026-10-22 (night 5): PHASE 5 FIRST RUN — the game runs in the app on the S25: videos, menu, sound
 

@@ -37,6 +37,25 @@ android {
         }
     }
 
+    // Two APKs: "dev" holds the game library built from this PC's translated code (the
+    // development build, never shared); "launcher" holds none (no game code at all) and runs a
+    // game package (dao/libdaodroid.so and the game files) built on the player's PC.
+    flavorDimensions "kind"
+    productFlavors {
+        dev {
+            dimension "kind"
+        }
+        launcher {
+            dimension "kind"
+            versionNameSuffix "-launcher"
+            externalNativeBuild {
+                cmake {
+                    arguments "-DDAO_LAUNCHER_ONLY=ON"
+                }
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false

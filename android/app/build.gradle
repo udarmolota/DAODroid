@@ -6,6 +6,16 @@ plugins {
     id 'com.android.application'
 }
 
+// The release key (the one all the author's launchers share) is kept out of git:
+// android/keystore.properties (gitignored) names storeFile, storePassword, keyAlias and
+// keyPassword. Without it, the launcher's release APK is debug-signed like the rest.
+def signingFile = rootProject.file("keystore.properties")
+def signing = new Properties()
+if (signingFile.isFile()) {
+    signingFile.withInputStream { signing.load(it) }
+}
+def hasSigning = ["storeFile", "storePassword", "keyAlias", "keyPassword"].every { signing.getProperty(it) }
+
 android {
     namespace 'com.daodroid'
     compileSdk 36
@@ -40,14 +50,31 @@ android {
     // Two APKs: "dev" holds the game library built from this PC's translated code (the
     // development build, never shared); "launcher" holds none (no game code at all) and runs a
     // game package (dao/libdaodroid.so and the game files) built on the player's PC.
+    signingConfigs {
+        if (hasSigning) {
+            release {
+                storeFile file(signing.getProperty("storeFile"))
+                storePassword signing.getProperty("storePassword")
+                keyAlias signing.getProperty("keyAlias")
+                keyPassword signing.getProperty("keyPassword")
+            }
+        }
+    }
+
     flavorDimensions "kind"
     productFlavors {
         dev {
             dimension "kind"
+            // Debug-signed: adb install -r replaces the debug build without wiping the app's
+            // data. Nobody distributes this APK (README).
+            signingConfig signingConfigs.debug
         }
         launcher {
             dimension "kind"
             versionNameSuffix "-launcher"
+            // The published APK: the release key when keystore.properties is there (launcher
+            // debug builds stay debug-signed: the debug build type sets its own).
+            signingConfig hasSigning ? signingConfigs.release : signingConfigs.debug
             externalNativeBuild {
                 cmake {
                     arguments "-DDAO_LAUNCHER_ONLY=ON"
@@ -59,9 +86,7 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            // A debug-signed release: adb install -r replaces the debug build without wiping
-            // the app's data. Nobody distributes this APK (README).
-            signingConfig signingConfigs.debug
+            // Signed per flavor (above).
         }
         debug {
             // The native code is always an optimized build (the game is unplayable otherwise).

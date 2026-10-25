@@ -16,10 +16,15 @@ gamedata/
 
 # Build output
 build/
+dist/
 .cxx/
 android/**/build/
 android/.gradle/
 android/local.properties
+# The release key's location and passwords (android/app/build.gradle): never committed.
+android/keystore.properties
+*.jks
+*.keystore
 *.apk
 *.aab
 *.so

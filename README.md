@@ -54,20 +54,24 @@ path), or create that file yourself with `sdk.dir=<path to the Android SDK>`. Th
 
 ```bash
 cd android
-./gradlew assembleDebug        # Windows: gradlew.bat assembleDebug
+./gradlew assembleDevDebug     # Windows: gradlew.bat assembleDevDebug
 ```
 
 The first build takes about 15 minutes (52,000 translated functions). The APK is
-`android/app/build/outputs/apk/debug/app-debug.apk`. It is a debug build on purpose: that is
-what lets you copy the game into the app's folder over USB (step 3).
+`android/app/build/outputs/apk/dev/debug/app-dev-debug.apk`. It is a debug build on purpose:
+that is what lets you copy the game into the app's folder over USB (step 3).
+
+The app has two variants: `dev`, the one above, with the game built in, and `launcher`
+(`assembleLauncherDebug`), without any game code, which runs a game package instead. The
+launcher and the PC tool that makes game packages are in progress; until then, use `dev`.
 
 ### 3. Installing on the phone
 
-Copy `app-debug.apk` to the phone (a USB cable, a cloud drive, a messenger) and open it there;
+Copy `app-dev-debug.apk` to the phone (a USB cable, a cloud drive, a messenger) and open it there;
 Android asks to allow installing apps from that source once. Or, with adb:
 
 ```bash
-adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+adb install -r android/app/build/outputs/apk/dev/debug/app-dev-debug.apk
 ```
 
 The app reads everything from `Android/data/com.daodroid/files/dao/` on the phone:

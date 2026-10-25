@@ -39,3 +39,7 @@ install/
 
 # Game data kept next to the repo (localization archives etc.): never committed.
 *.rar
+
+# Game packages (docs/PACKAGE_FORMAT.md): a player's own copy of the game, never committed.
+*.daopkg
+*.daopkg.partial

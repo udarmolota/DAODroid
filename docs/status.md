@@ -60,6 +60,13 @@ entry first. Plan: `PLAN_dao_android_native_port.md`; phase 1 steps: `PHASE1_run
   at the start), so the header always read as missing and the storage was reset each time.
   Fix: seek to the start before reading (both files). After it the cache grows across starts
   and the portraits show right after a cold load. To offer upstream (the POSIX side of #7).
+- PC: v0.10.0-dev.7 over install/ — portraits right after a cold load, no more "Failed to
+  write" in xenia.log. Issue #7 can be confirmed.
+- **Game package format** (`docs/PACKAGE_FORMAT.md`, launcher plan step 1): a stored ZIP64
+  `.daopkg` with `manifest.json` first (format, abi, disc pins, title update, build commits,
+  library hash, game totals), `lib/arm64-v8a/libdaodroid.so`, `game/...`, optional
+  `title_update/`. `scripts/make_package.py build|check`; a test package from install/game and
+  the dev build's library: 9451 files, 6.72 GB, built in a few minutes, check OK.
 
 ## 2026-10-22 (night 5): PHASE 5 FIRST RUN — the game runs in the app on the S25: videos, menu, sound
 

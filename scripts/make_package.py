@@ -122,6 +122,7 @@ def build(args):
     partial.replace(out)
     print(f"Done: {out} ({out.stat().st_size / 2**30:.2f} GB)")
     print("This package is your own copy of the game: don't share it.")
+    return out
 
 
 def check(args):

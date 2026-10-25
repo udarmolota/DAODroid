@@ -13,7 +13,7 @@ code from, the following projects, each under its own license:
 | SIMD Everywhere (SIMDe) | via XenonRecomp's `thirdparty/` | MIT |
 | SDL 3 | `recomp/thirdparty/SDL` (downloaded) | zlib |
 | FFmpeg (has207/xenia fork, XMA decoding) | downloaded into `recomp/tools/xenia-canary/third_party/` | LGPL 2.1+ |
-| Mesa Turnip (Vulkan driver for Adreno): StevenMXZ's Turnip Gen8 V38 build (Mesa 27.0), bundled in the APK as the built-in driver | `android/app/src/main/jniLibs/arm64-v8a/libvulkan_turnip_gen8.so` (not in the repository; from github.com/StevenMXZ/Adreno-Tools-Drivers, release v27.0.0-R1) | MIT |
+| Mesa Turnip (Vulkan driver for Adreno): StevenMXZ's Turnip Gen8 V38 build (Mesa 27.0), bundled in the APK as the built-in driver | `android/app/src/main/jniLibs/arm64-v8a/libvulkan_turnip_gen8.so`, unchanged from github.com/StevenMXZ/Adreno-Tools-Drivers release v27.0.0-R1 (`Turnip_Gen8_V38.zip`; SHA-256 `41da0373…fd013`); Mesa's source: gitlab.freedesktop.org/mesa/mesa | MIT |
 | liblinkernsbypass (Billy Laws): linker namespaces for the private Vulkan loader | `android/app/src/main/cpp/linkernsbypass/` | BSD 2-Clause |
 | AndroidX AppCompat, Material Components for Android (the launcher's screens) | Gradle dependencies | Apache-2.0 |
 | Material Design icons (Google): the launcher's icons | `android/app/src/main/res/drawable/ic_*.xml` | Apache-2.0 |

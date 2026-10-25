@@ -99,6 +99,13 @@ entry first. Plan: `PLAN_dao_android_native_port.md`; phase 1 steps: `PHASE1_run
   environment variables editing env.txt). Her saves moved from the development entry into
   the imported instance. The Vulkan validation layer moved to the dev flavor
   (`src/dev/jniLibs`); the launcher APK is 24.8 MB: SDL3, the driver hook, the built-in Turnip.
+- **PC tool** (`scripts/daodroid_tool.py`, a window in `scripts/daodroid_tool_gui.py`, started by
+  `DAODroid Tool.cmd`): disc image → DAORecomp's check_iso / extract_game / _prepare /
+  recompile → NDK r27d (the SDK's or a SHA-1-checked download) → CMake+Ninja build of
+  libdaodroid.so (no Gradle) → make_package. Test from the ISO into a fresh build/tool: 14 min,
+  `DAO-454108C0-b1aabde5.daopkg` 6.72 GB, check OK. The window not yet run by her.
+- The built-in Turnip V38 is now in the repository (as in Zomdroid; NOTICE.md). README rewritten
+  for players (her four steps); the building details in docs/BUILDING.md.
 
 ## 2026-10-22 (night 5): PHASE 5 FIRST RUN — the game runs in the app on the S25: videos, menu, sound
 

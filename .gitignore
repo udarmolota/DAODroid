@@ -43,3 +43,6 @@ install/
 # Game packages (docs/PACKAGE_FORMAT.md): a player's own copy of the game, never committed.
 *.daopkg
 *.daopkg.partial
+
+# The launcher's built-in Vulkan driver (Mesa Turnip, MIT; see NOTICE.md) ships in the repository, as in Zomdroid.
+!android/app/src/main/jniLibs/arm64-v8a/libvulkan_turnip_gen8.so

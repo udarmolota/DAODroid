@@ -99,14 +99,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: daodroid-launcher-debug-${{ steps.app_version.outputs.name }}
-          path: android/app/build/outputs/apk/launcher/debug/app-launcher-debug.apk
+          path: android/app/build/outputs/apk/launcher/debug/daodroid-launcher-debug-${{ steps.app_version.outputs.name }}.apk
           retention-days: 30
 
       - name: Upload release APK
         uses: actions/upload-artifact@v4
         with:
           name: daodroid-launcher-release-${{ steps.app_version.outputs.name }}
-          path: android/app/build/outputs/apk/launcher/release/app-launcher-release.apk
+          path: android/app/build/outputs/apk/launcher/release/daodroid-launcher-release-${{ steps.app_version.outputs.name }}.apk
           retention-days: 30
 
       # Who signed the release APK (the release key, or Android Debug without the secrets).
@@ -117,4 +117,4 @@ jobs:
         run: |
           APKSIGNER=$(ls "$ANDROID_SDK_ROOT"/build-tools/*/apksigner | sort -V | tail -n 1)
           echo "$APKSIGNER"
-          "$APKSIGNER" verify --verbose --print-certs android/app/build/outputs/apk/launcher/release/app-launcher-release.apk
+          "$APKSIGNER" verify --verbose --print-certs android/app/build/outputs/apk/launcher/release/daodroid-launcher-release-${{ steps.app_version.outputs.name }}.apk

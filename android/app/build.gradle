@@ -83,6 +83,14 @@ android {
         }
     }
 
+    // daodroid-<flavor>-<build type>-<version>.apk, e.g. daodroid-launcher-release-0.1.0.apk
+    // (the version without the flavor's suffix: the flavor is in the name already).
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "daodroid-${variant.flavorName}-${variant.buildType.name}-${defaultConfig.versionName}.apk"
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false

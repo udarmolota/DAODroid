@@ -5,7 +5,8 @@ without installing anything: unzip, double-click "DAODroid Tool.cmd", pick the d
 
 Inside:
   python/   python.org's embeddable Python (signed by the Python Software Foundation), with Tk
-            for the window copied from this machine's Python of the same version
+            for the window copied from this machine's Python of the same version, and
+            truststore (as DAORecomp's installer bundles it)
   src/      the files git tracks in this repository and in recomp/ (DAORecomp, the daodroid
             branch): the tool, the runtime and Xenia sources it compiles. No game code or data,
             no build output; the launcher's APK-only files (jniLibs) are left out.
@@ -91,7 +92,18 @@ def main():
                     ignore=shutil.ignore_patterns("*.lib", "*.sh", "nmake", "tix*"))
     shutil.copytree(base / "Lib" / "tkinter", stage / "python" / "Lib" / "tkinter",
                     ignore=shutil.ignore_patterns("__pycache__", "test"))
-    # The ._pth lists the search path: add Lib (tkinter) and keep site off.
+    # truststore (downloads checked with Windows' certificate verifier, so a fresh PC doesn't
+    # fail on GitHub's), pinned by hash in DAORecomp's requirements, unpacked into Lib.
+    wheels = WORK / "wheels"
+    if wheels.exists():
+        shutil.rmtree(wheels)
+    subprocess.run([sys.executable, "-m", "pip", "download", "--quiet", "--require-hashes", "--no-deps",
+                    "--only-binary", ":all:", "-r", str(ROOT / "recomp" / "scripts" / "installer-requirements.txt"),
+                    "-d", str(wheels)], check=True)
+    for wheel in wheels.glob("*.whl"):
+        with zipfile.ZipFile(wheel) as z:
+            z.extractall(stage / "python" / "Lib")
+    # The ._pth lists the search path: add Lib (tkinter, truststore) and keep site off.
     pth = next((stage / "python").glob("python3*._pth"))
     lines = pth.read_text(encoding="utf-8").splitlines()
     if "Lib" not in lines:

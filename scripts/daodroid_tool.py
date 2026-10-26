@@ -29,7 +29,7 @@ RECOMP = ROOT / "recomp"
 sys.path.insert(0, str(RECOMP))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from installer import pipeline, toolchain  # noqa: E402  (DAORecomp's installer steps)
+from installer import pipeline, toolchain, util  # noqa: E402  (DAORecomp's installer steps)
 from installer.util import InstallError, Reporter, check_host  # noqa: E402
 
 import make_package  # noqa: E402  (scripts/make_package.py)
@@ -44,6 +44,12 @@ NDK_DOWNLOADS = {
               "22105e410cf29afcf163760cc95522b9fb981121"),
 }
 STEPS = 5
+
+# What the Android build takes from xenia-canary beyond DAORecomp's sparse checkout: the Vulkan
+# backend's sources and shaders, and the submodules it compiles with (docs/PHASE4_runbook.md).
+CANARY_PATHS = ("src/xenia/gpu", "src/xenia/ui", "src/xenia/base", "cmake", "third_party/CMakeLists.txt")
+CANARY_SUBMODULES = ("third_party/Vulkan-Headers", "third_party/VulkanMemoryAllocator", "third_party/glslang",
+                     "third_party/SPIRV-Tools", "third_party/FidelityFX-CAS", "third_party/FidelityFX-FSR")
 
 
 def step(reporter, n, text):
@@ -112,6 +118,15 @@ def download_ndk(reporter, work):
             if p.is_file() and ("/bin/" in p.as_posix() or p.suffix == ""):
                 p.chmod(p.stat().st_mode | 0o111)
     return dest / "android-ndk-r27d"
+
+
+def ensure_vulkan_sources(reporter):
+    """The xenia-canary parts only the Android build needs, at the commits xenia-canary records
+    (util.GIT is the downloaded MinGit when the PC has no git)."""
+    canary = RECOMP / "tools" / "xenia-canary"
+    util.run(reporter, [*util.GIT, "-C", canary, "sparse-checkout", "add", *CANARY_PATHS], quiet=True)
+    util.run(reporter, [*util.GIT, "-C", canary, "submodule", "update", "--init", "--depth", "1",
+                        *CANARY_SUBMODULES], quiet=True)
 
 
 def build_library(reporter, tc, ndk, work, jobs):
@@ -188,6 +203,7 @@ def main(argv=None, reporter=None):
     pipeline.recompile(reporter, recompiler, game)
 
     step(reporter, 4, "Building the game library for the phone")
+    ensure_vulkan_sources(reporter)
     ndk = find_ndk(work) or download_ndk(reporter, work)
     reporter.log(f"NDK: {ndk}")
     library = build_library(reporter, tc, ndk, work, args.jobs)

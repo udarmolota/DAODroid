@@ -65,6 +65,10 @@ If you try another phone, a report from the launcher's **Report a bug** is very 
 - Heat: the phone's GPU gets throttled after some minutes at 60 fps; the 30 fps cap or a
   cooler helps.
 - No DLC or title update yet (DAORecomp supports them; untested on Android).
+- **Smart App Control** (Windows 11): the PC tool builds DAORecomp's recompiler on your PC, and
+  Smart App Control doesn't run unsigned programs, so the tool stops at step 3 while it's on.
+  Turning it off can't be undone without reinstalling Windows, so it's your call; DAORecomp's
+  own installer has the same limit. A signed recompiler is planned.
 - The text and voices are English, Italian or Spanish (what the disc has).
 
 ## License

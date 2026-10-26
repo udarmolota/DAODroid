@@ -48,6 +48,15 @@ def git_commit(path):
         return "unknown"
 
 
+def build_commit(name, path):
+    """The commit the package is built from: the PC tool's release zip has no .git, so
+    scripts/build_tool_release.py records both in BUILD.json; a checkout asks git."""
+    stamp = ROOT / "BUILD.json"
+    if stamp.is_file():
+        return json.loads(stamp.read_text(encoding="utf-8")).get(name, "unknown")
+    return git_commit(path)
+
+
 def file_hash(path, algo):
     h = hashlib.new(algo)
     with open(path, "rb") as f:
@@ -84,7 +93,7 @@ def build(args):
     files = sorted(p for p in game.rglob("*") if p.is_file())
     game_bytes = sum(p.stat().st_size for p in files)
     library_sha256 = file_hash(library, "sha256")
-    daodroid = git_commit(ROOT)
+    daodroid = build_commit("daodroid", ROOT)
     manifest = {
         "format": FORMAT,
         "abi": abi_version(),
@@ -94,7 +103,7 @@ def build(args):
         "title_update": title_update,
         "build": {
             "daodroid": daodroid,
-            "daorecomp": git_commit(ROOT / "recomp"),
+            "daorecomp": build_commit("daorecomp", ROOT / "recomp"),
             "created": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "tool": TOOL,
         },

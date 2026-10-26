@@ -17,6 +17,8 @@ gamedata/
 # Build output
 build/
 dist/
+# The PC tool zip's record of its commits (scripts/build_tool_release.py): only in the zip.
+/BUILD.json
 .cxx/
 android/**/build/
 android/.gradle/

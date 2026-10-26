@@ -51,6 +51,14 @@ CANARY_PATHS = ("src/xenia/gpu", "src/xenia/ui", "src/xenia/base", "cmake", "thi
 CANARY_SUBMODULES = ("third_party/Vulkan-Headers", "third_party/VulkanMemoryAllocator", "third_party/glslang",
                      "third_party/SPIRV-Tools", "third_party/FidelityFX-CAS", "third_party/FidelityFX-FSR")
 
+# WinError 4551: Windows' Smart App Control refused to run a program built on this PC
+# (XenonRecomp.exe, unsigned). It has no per-file exceptions, and turning it off is for good.
+SMART_APP_CONTROL_BLOCKED = 4551
+SMART_APP_CONTROL_MESSAGE = (
+    "Windows blocked XenonRecomp.exe, the recompiler this tool builds on your PC: Smart App Control "
+    "doesn't run programs that aren't signed. The tool can't run on this PC while Smart App Control is on "
+    "(Windows Security > App & browser control).")
+
 
 def step(reporter, n, text):
     reporter.status(f"[{n}/{STEPS}] {text}")
@@ -188,6 +196,10 @@ def main(argv=None, reporter=None):
     iso = Path(args.iso).expanduser().resolve()
 
     check_host()
+    # Asked first: not after an hour of extracting and downloading.
+    if sys.platform == "win32" and not args.accept_license and not toolchain.winsysroot_ready():
+        raise InstallError("Pass --accept-msvc-license (Microsoft's license for the Windows SDK headers DAORecomp's "
+                           "recompiler is built with), or tick it in the window.")
     step(reporter, 1, "Checking the disc image")
     pipeline.check_iso(reporter, iso)
 
@@ -196,11 +208,13 @@ def main(argv=None, reporter=None):
     pipeline.extract_game(reporter, iso, game)
 
     step(reporter, 3, "Translating the game's code (the first time takes a while: the tools are set up too)")
-    if sys.platform == "win32" and not args.accept_license and not toolchain.winsysroot_ready():
-        raise InstallError("Pass --accept-msvc-license (Microsoft's license for the Windows SDK headers DAORecomp's "
-                           "recompiler is built with), or tick it in the window.")
     tc, recompiler = pipeline._prepare(reporter, args, 3)
-    pipeline.recompile(reporter, recompiler, game)
+    try:
+        pipeline.recompile(reporter, recompiler, game)
+    except OSError as e:
+        if getattr(e, "winerror", None) == SMART_APP_CONTROL_BLOCKED:
+            raise InstallError(SMART_APP_CONTROL_MESSAGE) from e
+        raise
 
     step(reporter, 4, "Building the game library for the phone")
     ensure_vulkan_sources(reporter)

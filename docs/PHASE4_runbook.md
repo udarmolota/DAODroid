@@ -37,7 +37,7 @@ The installer's xenia-canary checkout is sparse; the Vulkan backend needs more o
 ```bash
 cd recomp/tools/xenia-canary
 git sparse-checkout add src/xenia/gpu src/xenia/ui src/xenia/base cmake third_party/CMakeLists.txt
-git submodule update --init third_party/Vulkan-Headers third_party/VulkanMemoryAllocator third_party/glslang third_party/FidelityFX-CAS third_party/FidelityFX-FSR
+git submodule update --init third_party/Vulkan-Headers third_party/VulkanMemoryAllocator third_party/glslang third_party/SPIRV-Tools third_party/FidelityFX-CAS third_party/FidelityFX-FSR
 ```
 
 A Turnip build for the phone's Adreno (the Mesa Vulkan driver): see "Results" for why. The

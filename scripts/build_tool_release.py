@@ -17,6 +17,7 @@ are downloaded by it on its first run, pinned and checked, as DAORecomp's instal
 """
 import argparse
 import hashlib
+import json
 import shutil
 import subprocess
 import sys
@@ -47,6 +48,9 @@ README = """DAODroid's PC tool
 3. Pick your Dragon Age: Origins Xbox 360 disc image (.iso) and a folder for the package.
 4. Wait (about an hour the first time: it downloads and sets up its tools).
 5. Copy the .daopkg file to your phone and add it in the DAODroid launcher (+).
+
+If Windows says Smart App Control blocked XenonRecomp.exe: the tool can't run on this PC while
+Smart App Control is on (see Known issues on the project page).
 
 The package is your own copy of the game: don't share it.
 Source and help: https://github.com/udarmolota/DAODroid
@@ -128,6 +132,11 @@ def main():
     (stage / "src" / "recomp" / "VERSION").write_text(
         subprocess.run(["git", "-C", str(ROOT / "recomp"), "describe", "--tags", "--always"], capture_output=True,
                        text=True).stdout.strip() or "daodroid", encoding="utf-8")
+    # The commits the source is (the zip has no .git): make_package.py names packages after them.
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from make_package import git_commit
+    (stage / "src" / "BUILD.json").write_text(json.dumps(
+        {"daodroid": git_commit(ROOT), "daorecomp": git_commit(ROOT / "recomp")}, indent=2) + "\n", encoding="utf-8")
     (stage / "DAODroid Tool.cmd").write_text(CMD.replace("\n", "\r\n"), encoding="utf-8")
     (stage / "README.txt").write_text(README.replace("\n", "\r\n"), encoding="utf-8")
     print(f"Source: {count} files")
